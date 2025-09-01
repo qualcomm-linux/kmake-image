@@ -244,5 +244,14 @@ fastboot reboot bootloader
 fastboot boot images/boot.img
 ```
 
+## Workspace Setup Script
+*setup.sh* script simplify the initial setup for kernel developers:
+- Builds the Docker image and fetches Qualcomm Kernel source tree and required
+artifacts (ramdisk, systemd-boot).
+- Export necessary environment variables for kernel development.
+```
+./setup.sh
+```
+
 ## License
 kmake-image is licensed under the [*BSD-3-clause-clear License*](https://spdx.org/licenses/BSD-3-Clause-Clear.html). See [*LICENSE*](https://github.com/qualcomm-linux/kmake-image/blob/main/LICENSE) for the full license text.
