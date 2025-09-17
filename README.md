@@ -102,6 +102,11 @@ wget -O artifacts/systemd-boot-efi.deb http://ports.ubuntu.com/pool/universe/s/s
 dpkg-deb -xv artifacts/systemd-boot-efi.deb artifacts/systemd
 ```
 
+#### Fetch qcom-dtb-metadata
+```
+git clone https://github.com/qualcomm-linux/qcom-dtb-metadata.git artifacts/qcom-dtb-metadata
+```
+
 ### 4. Build Kernel
 ```
 cd kernel
@@ -196,14 +201,24 @@ fastboot reboot bootloader
 fastboot boot images/boot.img
 ```
 
-### 11. Or Build Ubuntu Kernel deb packages
+### 11. Generate FIT image
+```
+cd ..
+kmake-image-run make_fitimage.sh \
+        --metadata artifacts/qcom-dtb-metadata/qcom-metadata.dtb \
+		--its artifacts/qcom-dtb-metadata/qcom-fitimage.its \
+        --kobj kobj \
+        --output images
+```
+
+### 12. Or Build Ubuntu Kernel deb packages
 ```
   kmake O=../debian mrproper
   kmake O=../debian defconfig
   kmake O=../debian -j$(nproc) bindeb-pkg
 ```
 
-### 12. Kernel Configuration Management
+### 13. Kernel Configuration Management
 Qualcomm's kernel setup builds on top of the standard ***arch/arm64/configs/defconfig*** by introducing three additional configuration fragments:
 
 - **arch/arm64/configs/prune.config** : Disables support for non-Qualcomm architectures to streamline the kernel for Qualcomm platforms
@@ -332,6 +347,33 @@ kmake-image-run mkbootimg \
         --pagesize 2048 \
         --output boot.img
 ```
+
+### mkimage
+*mkimage* (part of U-Boot) is used to convert an ITS file into a FIT image.
+*Flattened Image Tree (FIT)* image can be used to bundle multiple device tree
+blobs (DTBs) into a single image.
+
+Run make_fitimage.sh script to create fit_dtb.bin by utilizing ITS (Image Tree Source)
+file and metadata DTS.
+
+#### Examples
+
+The following generates a *fit_dtb.bin* by utilizing a Qualcomm-specific ITS
+file and metadata DTS from [qcom-dtb-metadata](https://github.com/qualcomm-linux/qcom-dtb-metadata.git):
+```
+kmake-image-run make_fitimage.sh \
+        --out kobj \
+        --images images
+```
+Or
+Generate a *fit_dtb.bin* by utilizing custom ITS file and metadata DTS directory path:
+```
+kmake-image-run make-fitimage.sh \
+        --out kobj \
+        --input custom-its-metadata-dir \
+        --images images
+```
+
 
 ### Install kernel deb packages on Ubuntu
 For installing kernel deb packages on Ubuntu, refer [README_ubuntu](./README_ubuntu.md)
