@@ -6,11 +6,12 @@ BOOTIMG_EXTRA_SPACE="512"
 MKFSVFAT_EXTRAOPTS="-S 512"
 
 show_help() {
-    echo "Usage: generate_images.sh [command] [options]"
+    echo "Usage: generate_boot_bins.sh [command] [options]"
     echo ""
     echo "Commands:"
     echo "  efi       Generate EFI image"
     echo "  dtb       Generate DTB image"
+    echo "  bin       Generate bin"
     echo "  help      Show this help message"
     echo ""
     echo "efi command options:"
@@ -24,6 +25,9 @@ show_help() {
     echo "dtb command options:"
     echo "  --input PATH           Path to the DTB file"
     echo "  --output DIR           Optional Output directory"
+    echo "bin command options:"
+    echo "  --input DIR            Path to the input directory"
+    echo "  --output PATH          Output file path"
 }
 
 generate_bin() {
@@ -161,6 +165,27 @@ generate_dtb_image() {
     generate_bin "${OUTPUT_DIR}/dtb_dir/dtb" "${OUTPUT_DIR}/dtb.bin"
 }
 
+generate_bin_image() {
+    # Parse arguments
+    while [[ "$#" -gt 0 ]]; do
+        case $1 in
+            --input) INPUT_DIR="$2"; shift ;;
+            --output) OUTPUT_PATH="$2"; shift ;;
+            *) echo "Unknown parameter passed: $1"; show_help ; exit 1 ;;
+        esac
+        shift
+    done
+
+    # Check if required parameters are provided
+    if [ -z "${INPUT_DIR}" ] || [ -z "${OUTPUT_PATH}" ]; then
+        echo "bin: Missing required parameter"
+        echo "Use --help option for usage information."
+        exit 1
+    fi
+
+    generate_bin "${INPUT_DIR}" "${OUTPUT_PATH}"
+}
+
 # Main script logic
 if [[ "$1" == "efi" ]]; then
     shift
@@ -168,6 +193,9 @@ if [[ "$1" == "efi" ]]; then
 elif [[ "$1" == "dtb" ]]; then
     shift
     generate_dtb_image "$@"
+elif [[ "$1" == "bin" ]]; then
+    shift
+    generate_bin_image "$@"
 elif [[ "$1" == "--help" ]]; then
     show_help
 else
