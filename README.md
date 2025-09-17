@@ -139,6 +139,26 @@ kmake-image-run mkbootimg \
         --output boot.img
 ```
 
+## mkimage
+*mkimage* (part of U-Boot) is used to convert an ITS file into a FIT image.
+*Flattened Image Tree (FIT)* image can be used to bundle multiple device tree
+blobs (DTBs) into a single image.
+
+Run make-fitimage.sh script to create fit_dtb.bin by utilizing ITS (Image Tree Source)
+file and metadata DTS.
+
+### Examples
+
+The following generates a *fit_dtb.bin* by utilizing a Qualcomm-specific ITS
+file and metadata DTS:
+```
+kmake-image-run make-fitimage.sh \
+        --out kobj \
+        --its ../kmake-image/qcom-fitimage.its \
+        --metadata ../kmake-image/qcom-metadata.dts \
+        --images images
+```
+
 # TL;DR
 
 The following example captures how to fetch and build efi and dtb bins of the
