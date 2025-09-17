@@ -14,6 +14,7 @@ ENV CROSS_COMPILE=aarch64-linux-gnu-
 
 COPY generate_boot_bins.sh /usr/bin
 COPY build.sh /usr/bin
+COPY make_fitimage.sh /usr/bin
 
 RUN printf "Types: deb\nURIs: http://archive.ubuntu.com/ubuntu/\nSuites: noble noble-updates noble-security\nComponents: main restricted universe multiverse\nArchitectures: amd64\n\n" > /etc/apt/sources.list.d/base-amd64.sources && \
     printf "Types: deb\nURIs: http://ports.ubuntu.com/ubuntu-ports/\nSuites: noble noble-updates noble-security\nComponents: main restricted universe multiverse\nArchitectures: arm64\n\n" > /etc/apt/sources.list.d/ports-arm64.sources && \
@@ -32,6 +33,7 @@ RUN printf "Types: deb\nURIs: http://archive.ubuntu.com/ubuntu/\nSuites: noble n
     chmod +x /usr/bin/mkbootimg && \
     chmod +x /usr/bin/generate_boot_bins.sh && \
     chmod +x /usr/bin/build.sh && \
+    chmod +x /usr/bin/make_fitimage.sh && \
     dpkg --add-architecture arm64 && \
     apt-get install -y libssl-dev:arm64 && \
     rm -rf /var/lib/apt/lists/*
