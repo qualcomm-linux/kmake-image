@@ -13,6 +13,7 @@ RUN apt-get update && \
     python3 -m pip install --break-system-packages dtschema==2024.11 jinja2 ply GitPython && \
     apt-get install -y yq && \
     apt-get install -y abigail-tools sparse && \
+    apt-get install -y cmake libyaml-dev && \
     curl "https://android.googlesource.com/platform/system/tools/mkbootimg/+/refs/heads/android12-release/mkbootimg.py?format=TEXT" | base64 --decode > /usr/bin/mkbootimg && \
     chmod +x /usr/bin/mkbootimg && \
     chmod +x /usr/bin/generate_boot_bins.sh && \
