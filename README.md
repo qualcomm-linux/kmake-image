@@ -244,5 +244,31 @@ fastboot reboot bootloader
 fastboot boot images/boot.img
 ```
 
+## Workspace Setup Script
+*setup.sh* script simplify the initial setup for kernel developers:
+- Builds the Docker image and fetches Qualcomm Kernel source tree and required
+artifacts (ramdisk, systemd-boot).
+- Export necessary environment variables for kernel development.
+```
+./setup.sh
+```
+
+## Kernel Image Generation Script
+Run *build.sh* script to automate building and packaging a bootable kernel
+image into efi.bin, dtb.bin, and boot.img
+
+Note: The --dtb argument is mandatory. It specifies the Device Tree Blob to be
+packed into the kernel image.
+
+### Example
+```
+kmake-image-run build.sh --dtb qcs6490-rb3gen2.dtb \
+        --out kobj
+        --systemd artifacts/systemd/usr/lib/systemd/boot/efi \
+        --ramdisk artifacts/ramdisk.gz \
+        --images images \
+        --cmdline "${CMDLINE}"
+```
+
 ## License
 kmake-image is licensed under the [*BSD-3-clause-clear License*](https://spdx.org/licenses/BSD-3-Clause-Clear.html). See [*LICENSE*](https://github.com/qualcomm-linux/kmake-image/blob/main/LICENSE) for the full license text.
