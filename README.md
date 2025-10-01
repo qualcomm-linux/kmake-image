@@ -142,7 +142,7 @@ kmake-image-run mkbootimg \
 # TL;DR
 
 The following example captures how to fetch and build efi and dtb bins of the
-upstream Linux Kernel for QCS6490 Rb3Gen2.
+Qualcomm Linux Kernel for QCS6490 Rb3Gen2.
 
 ### 1. Clone kmake-image
 ```
@@ -157,7 +157,7 @@ alias kmake-image-run='docker run -it --rm --user $(id -u):$(id -g) --workdir="$
 alias kmake='kmake-image-run make'
 ```
 
-### 3. Clone Linux Kernel Tree and other dependencies
+### 3. Clone Qualcomm Linux Kernel Tree and other dependencies
 ```
 cd ..
 git clone git@github.com:qualcomm-linux/kernel.git
@@ -177,8 +177,8 @@ dpkg-deb -xv artifacts/systemd-boot-efi.deb artifacts/systemd
 
 ### 4. Build Kernel
 ```
-cd linux
-kmake O=../kobj defconfig
+cd kernel
+kmake O=../kobj defconfig prune.config qcom.config debug.config
 kmake O=../kobj -j$(nproc)
 kmake O=../kobj -j$(nproc) dir-pkg INSTALL_MOD_STRIP=1
 ```

@@ -71,7 +71,14 @@ if [ ! -f "Makefile" ] || [ ! -d "arch" ]; then
     exit 1
 fi
 
-make O="$KERNEL_BUILD_ARTIFACTS" defconfig
+# Check for each config fragment and append if present
+CONFIG_FRAGMENTS=""
+[[ -f "arch/arm64/configs/prune.config" ]] && CONFIG_FRAGMENTS+=" prune.config"
+[[ -f "arch/arm64/configs/qcom.config" ]] && CONFIG_FRAGMENTS+=" qcom.config"
+[[ -f "kernel/configs/debug.config" ]] && CONFIG_FRAGMENTS+=" debug.config"
+
+# Run make with available config fragments
+make O="$KERNEL_BUILD_ARTIFACTS" defconfig $CONFIG_FRAGMENTS
 make O="$KERNEL_BUILD_ARTIFACTS" -j$(nproc)
 make O="$KERNEL_BUILD_ARTIFACTS" -j$(nproc) dir-pkg INSTALL_MOD_STRIP=1
 
