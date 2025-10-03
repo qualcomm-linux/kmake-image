@@ -5,7 +5,7 @@
 #
 # Usage:
 #   ./build.sh --dtb <your.dtb> [--out <kernel_dir>] [--systemd <systemd_boot_dir>]
-#              [--ramdisk <ramdisk_path>] [--images <output_dir>] [--cmdline <cmdline>]
+#              [--ramdisk <ramdisk_path>] [--images <output_dir>] [--cmdline <cmdline>] [--no-debug]
 #
 # Options:
 #   --dtb       Name of the DTB file to use (required)
@@ -14,6 +14,7 @@
 #   --ramdisk   Path to ramdisk image (default: ../artifacts/ramdisk.gz)
 #   --images    Output directory for generated images (default: ../images)
 #   --cmdline   Kernel command line arguments (default: predefined string)
+#   --no-debug  Skip adding debug.config to kernel build
 #
 # Description:
 #   This script builds the kernel, packages modules into a ramdisk, and generates
@@ -34,6 +35,7 @@ SYSTEMD_BOOT_DIR="$(realpath ../artifacts/systemd/usr/lib/systemd/boot/efi)"
 RAMDISK="$(realpath ../artifacts/ramdisk.gz)"
 IMAGES_OUTPUT="$(realpath ../images)"
 KERNEL_CMDLINE="console=ttyMSM0,115200n8 earlycon qcom_geni_serial.con_enabled=1 qcom_scm.download_mode=1 reboot=panic_warm mitigations=auto"
+NO_DEBUG=false
 
 # Parse long options
 eval set -- "$(getopt -n "$0" -o "" \
@@ -47,6 +49,7 @@ while [[ $# -gt 0 ]]; do
         --ramdisk) RAMDISK="$(realpath "$2")"; shift 2 ;;
         --images) IMAGES_OUTPUT="$(realpath "$2")"; shift 2 ;;
         --cmdline) KERNEL_CMDLINE="$2"; shift 2 ;;
+        --no-debug) NO_DEBUG=true; shift ;;
         --) shift; break ;;
         *) echo "Unknown option: $1"; exit 1 ;;
     esac
@@ -55,7 +58,7 @@ done
 # Check input dtb
 if [[ -z "$DTB_FILENAME" ]]; then
     echo "Error: No DTB file provided."
-    echo "Usage: $0 --dtb your.dtb [--out kernel_dir] [--systemd systemd_boot_dir] [--ramdisk ramdisk_path] [--images output_dir] [--cmdline cmdline]"
+    echo "Usage: $0 --dtb your.dtb [--out kernel_dir] [--systemd systemd_boot_dir] [--ramdisk ramdisk_path] [--images output_dir] [--cmdline cmdline] [--no-debug]"
     exit 1
 fi
 
@@ -71,7 +74,14 @@ if [ ! -f "Makefile" ] || [ ! -d "arch" ]; then
     exit 1
 fi
 
-make O="$KERNEL_BUILD_ARTIFACTS" defconfig
+# Check for each config fragment and append if present
+CONFIG_FRAGMENTS=""
+[[ -f "arch/arm64/configs/prune.config" ]] && CONFIG_FRAGMENTS+=" prune.config"
+[[ -f "arch/arm64/configs/qcom.config" ]] && CONFIG_FRAGMENTS+=" qcom.config"
+[[ "$NO_DEBUG" = false && -f "kernel/configs/debug.config" ]] && CONFIG_FRAGMENTS+=" debug.config"
+
+# Run make with available config fragments
+make O="$KERNEL_BUILD_ARTIFACTS" defconfig $CONFIG_FRAGMENTS
 make O="$KERNEL_BUILD_ARTIFACTS" -j$(nproc)
 make O="$KERNEL_BUILD_ARTIFACTS" -j$(nproc) dir-pkg INSTALL_MOD_STRIP=1
 
