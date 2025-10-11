@@ -28,7 +28,8 @@ set -e
 # Default values
 KERNEL_REPO=https://github.com/qualcomm-linux/kernel.git
 KERNEL_BRANCH=qcom-next
-RAMDISK_PATH=""
+KERNEL_PATH="../kernel"
+RAMDISK_PATH="https://snapshots.linaro.org/member-builds/qcomlt/testimages/arm64/1379/initramfs-test-image-qemuarm64-20230321073831-1379.rootfs.cpio.gz"
 
 # Parse long options
 eval set -- "$(getopt -n "$0" -o "" \
@@ -38,9 +39,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --kernel) KERNEL_REPO="$2"; shift 2 ;;
         --branch) KERNEL_BRANCH="$2"; shift 2 ;;
-        --ramdisk)
-            RAMDISK_PATH="https://snapshots.linaro.org/member-builds/qcomlt/testimages/arm64/1379/initramfs-test-image-qemuarm64-20230321073831-1379.rootfs.cpio.gz"
-            shift ;;
+        --ramdisk) RAMDISK_PATH="$2"; shift 2 ;;
         --) shift; break ;;
         *) echo "Unknown option: $1"; exit 1 ;;
     esac
@@ -75,8 +74,18 @@ echo "Setting up Docker aliases..."
 
 export PATH=$PWD:$PATH
 
-echo "Cloning Qualcomm Linux kernel tree..."
-git clone --branch "$KERNEL_BRANCH" "$KERNEL_REPO" ../kernel
+
+if [ -d "$KERNEL_PATH" ]; then
+    if [ "$(ls -A "$KERNEL_PATH")" ]; then
+        echo "Directory '$DIR' exists but is not-empty. Skip cloning kernel."
+	skip_kernel=true
+    fi
+fi
+
+if [[ $skip_kernel != true ]]; then
+    echo "Cloning Qualcomm Linux kernel tree..."
+    git clone --branch "$KERNEL_BRANCH" "$KERNEL_REPO" ../kernel
+fi
 
 echo "Downloading systemd boot binaries..."
 mkdir -p ../artifacts
