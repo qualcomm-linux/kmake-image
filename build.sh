@@ -111,6 +111,17 @@ generate_boot_bins.sh efi \
     --cmdline "${KERNEL_CMDLINE:-}" \
     --output "$IMAGES_OUTPUT"
 
+echo "Creating efi_with_dtb.bin..."
+KERNEL_IMAGE="$KERNEL_BUILD_ARTIFACTS"/arch/arm64/boot/Image
+generate_boot_bins.sh efi \
+    --ramdisk "$CONCATENATE_RAMDISK" \
+    --systemd-boot "$SYSTEMD_BOOT_DIR/systemd-bootaa64.efi" \
+    --stub "$SYSTEMD_BOOT_DIR/linuxaa64.efi.stub" \
+    --linux "$KERNEL_IMAGE" \
+    --devicetree "$DTB_PATH" \
+    --cmdline "${KERNEL_CMDLINE:-}" \
+    --output "$IMAGES_OUTPUT"
+
 # Generate dtb.bin
 echo "Creating dtb.bin..."
 generate_boot_bins.sh dtb \

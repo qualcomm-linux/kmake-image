@@ -16,8 +16,9 @@ show_help() {
     echo "efi command options:"
     echo "  --ramdisk PATH         Path to the ramdisk file"
     echo "  --systemd-boot PATH    Path to the systemd boot"
-	echo "  --stub                 Path to efi stub"
+    echo "  --stub                 Path to efi stub"
     echo "  --linux PATH           Path to the Linux Image"
+    echo "  --devicetree PATH      Optional Path to the DTB file"
     echo "  --cmdline CMDLINE      Optional Kernel command line parameters"
     echo "  --output DIR           Optional Output directory"
     echo ""
@@ -78,6 +79,7 @@ generate_efi_image() {
             --systemd-boot) SYSTEMD_BOOT="$2"; shift ;;
 			--stub) STUB="$2"; shift ;;
             --linux) LINUX_IMAGE="$2"; shift ;;
+            --devicetree) DTB="$2"; shift ;;
             --cmdline) KERNEL_VENDOR_CMDLINE="$2"; shift ;;
             --output) OUTPUT_DIR="$2"; shift ;;
             *) echo "Unknown parameter passed: $1"; show_help ; exit 1 ;;
@@ -114,16 +116,28 @@ generate_efi_image() {
         exit 1
     fi
 
-    rm -rf "${OUTPUT_DIR}/uki.efi" "${OUTPUT_DIR}/efi.bin"
+    # Handle DTB if provided
+    if [ -n "${DTB}" ]; then
+        [ ! -e "${DTB}" ] && echo "No ${DTB} found" && exit 1
+        UKI_FILENAME="uki_with_dtb.efi"
+        EFI_BIN_FILENAME="efi_with_dtb.bin"
+        cp "${DTB}" "${OUTPUT_DIR}/efi_dir/dtb/combined-dtb.dtb"
+    else
+        UKI_FILENAME="uki.efi"
+        EFI_BIN_FILENAME="efi.bin"
+    fi
+
+    rm -rf "${OUTPUT_DIR}/${UKI_FILENAME}" "${OUTPUT_DIR}/${EFI_BIN_FILENAME}"
 
     # Build UKI image
     ukify build --initrd="${RAMDISK}" --linux="${LINUX_IMAGE}" \
-        --efi-arch=aa64 --cmdline="${KERNEL_VENDOR_CMDLINE}" --stub="${STUB}" --output="${OUTPUT_DIR}/uki.efi"
+        --efi-arch=aa64 --cmdline="${KERNEL_VENDOR_CMDLINE}" --stub="${STUB}" \
+        ${DTB:+--devicetree="$DTB"} --output="${OUTPUT_DIR}/${UKI_FILENAME}"
 
-    echo "UKI image created at ${OUTPUT_DIR}/uki.efi"
-    rsync "${OUTPUT_DIR}/uki.efi" "${OUTPUT_DIR}/efi_dir/EFI/Linux/"
+    echo "UKI image created at ${OUTPUT_DIR}/${UKI_FILENAME}"
+    rsync "${OUTPUT_DIR}/${UKI_FILENAME}" "${OUTPUT_DIR}/efi_dir/EFI/Linux/"
 
-    generate_bin "${OUTPUT_DIR}/efi_dir" "${OUTPUT_DIR}/efi.bin"
+    generate_bin "${OUTPUT_DIR}/efi_dir" "${OUTPUT_DIR}/${EFI_BIN_FILENAME}"
 }
 
 generate_dtb_image() {

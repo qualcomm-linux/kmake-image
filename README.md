@@ -135,7 +135,29 @@ fastboot flash dtb_a images/dtb.bin
 fastboot reboot
 ```
 
-### 9. Or Generate boot.img for targets supporting Android boot partition
+### 9. Or Generate efi_with_dtb.bin for targets without separate dtb partition
+For targets that do not support separate dtb partition, docker can be used to
+create efi_with_dtb.bin
+The following example demonstrates how to build a boot image of the upstream
+Linux kernel for the SM8750 MTP platform.
+```
+cd ..
+kmake-image-run generate_boot_bins.sh efi --ramdisk artifacts/ramdisk.gz \
+		--systemd-boot artifacts/systemd/usr/lib/systemd/boot/efi/systemd-bootaa64.efi \
+		--stub artifacts/systemd/usr/lib/systemd/boot/efi/linuxaa64.efi.stub \
+		--linux kobj/arch/arm64/boot/Image \
+		--devicetree kobj/arch/arm64/boot/dts/qcom/sm8750-mtp.dtb \
+		--cmdline "${CMDLINE}" \
+		--output images
+```
+
+The resulting **efi_with_dtb.bin** is ready to be booted on a SM8750 MTP.
+```
+fastboot flash efi images/efi_with_dtb.bin
+fastboot reboot
+```
+
+### 10. Or Generate boot.img for targets supporting Android boot partition
 
 For targets that support android boot image format, docker can be used to
 create a boot image.
