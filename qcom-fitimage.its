@@ -7,7 +7,7 @@
 	images {
 		fdt-0 {
 			description = "metadata for multi-DTB selection";
-			data = /incbin/("./qcom-dts-metadata.dtb");
+			data = /incbin/("./qcom-metadata.dtb");
 			type = "qcom_metadata";
 		};
 		fdt-1 {
