@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * qcom dtb metadata device tree source
+ * qcom metadata device tree source
  *
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *
@@ -31,23 +31,23 @@
 		};
 
 		qcs9100 {
-			msm-id = <0x0000029B 0x0>;
+			msm-id = <0x0000029b 0x0>;
 		};
 
 		qcs9075 {
-			msm-id = <0x000002A4 0x0>;
+			msm-id = <0x000002a4 0x0>;
 		};
 
 		qcs8300 {
-			msm-id = <0x000002A2 0x0>;
+			msm-id = <0x000002a2 0x0>;
 		};
 
 		qcs8275 {
-			msm-id = <0x000002A3 0x0>;
+			msm-id = <0x000002a3 0x0>;
 		};
 
 		qcs615 {
-			msm-id = <0x000002A2 0x0>;
+			msm-id = <0x000002a2 0x0>;
 		};
 	};
 
@@ -58,19 +58,19 @@
 	};
 
 	board {
-		idp {
-			board-id = <0x00000022>;
+		cdp {
+			board-id = <0x00000001>;
+		};
+
+		mtp {
+			board-id = <0x00000008>;
 		};
 
 		adp {
 			board-id = <0x00000019>;
 		};
 
-		cdp {
-			board-id = <0x00000001>;
-		};
-
-		rb {
+		iot {
 			board-id = <0x00000020>;
 		};
 
@@ -78,12 +78,12 @@
 			board-id = <0x00000021>;
 		};
 
-		ride {
-			board-id = <0x00000025>;
+		idp {
+			board-id = <0x00000022>;
 		};
 	};
 
-	board-subtype-hlos-subtype {
+	board-subtype-peripheral-subtype {
 		subtype0 {
 			board-subtype  = <0x00000000>;
 		};
@@ -123,6 +123,10 @@
 		subtype9 {
 			board-subtype  = <0x00000009>;
 		};
+		
+		subtype10 {
+			board-subtype  = <0x0000000a>;
+		};
 	};
 
 
@@ -139,7 +143,6 @@
 			board-subtype = <0x00002000>;
 		};
 	};
-
 
 	board-subtype-memory-size {
 		256MB {
@@ -181,9 +184,7 @@
 		};
 	};
 
-	pmic {
-	};
-
 	oem {
+
 	};
 };
