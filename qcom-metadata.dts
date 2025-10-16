@@ -18,16 +18,16 @@
 			msm-id = <0x000001f1 0x0>;
 		};
 
-		qcm6490r10 {
-			msm-id = <0x000001f1 0xa>;
+		qcm6490r3 {
+			msm-id = <0x000001f1 0x30>;
 		};
 
 		qcs6490 {
 			msm-id = <0x000001f2 0x0>;
 		};
 
-		qcs6490r10 {
-			msm-id = <0x000001f2 0xa>;
+		qcs6490r3 {
+			msm-id = <0x000001f2 0x30>;
 		};
 
 		qcs9100 {
