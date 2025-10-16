@@ -6,7 +6,7 @@
 
 	images {
 		fdt-0 {
-			description = "metadata for multi DT selection";
+			description = "metadata for multi-DTB selection";
 			data = /incbin/("./qcom-metadata.dtb");
 			type = "qcom_metadata";
 		};
@@ -50,47 +50,43 @@
 
 	configurations {
 		conf-1 {
-			compatible = "qcom,qcm6490-idp-subtype0";
+			compatible = "qcom,qcm6490-idp";
 			fdt = "fdt-1";
 		};
 		conf-2 {
-			compatible = "qcom,qcs6490-rb-subtype5";
+			compatible = "qcom,qcs6490-iot";
 			fdt = "fdt-2";
 		};
 		conf-3 {
-			compatible = "qcom,qcs6490-rb-subtype2";
+			compatible = "qcom,qcs6490-iot-subtype2";
 			fdt = "fdt-3";
 		};
 		conf-4 {
-			compatible = "qcom,qcs6490r10-rb-subtype2";
+			compatible = "qcom,qcs6490r3-iot-subtype2";
 			fdt = "fdt-3";
 		};
 		conf-5 {
-			compatible = "qcom,qcs6490r10-rb-subtype2";
-			fdt = "fdt-3";
-		};
-		conf-6 {
-			compatible = "qcom,qcs6490-rb-subtype9";
+			compatible = "qcom,qcs6490-iot-subtype9";
 			fdt = "fdt-4";
 		};
-		conf-7 {
-			compatible = "qcom,qcs9075-rb-subtype0";
+		conf-6 {
+			compatible = "qcom,qcs9075-iot";
 			fdt = "fdt-5";
 		};
-		conf-8 {
-			compatible = "qcom,qcs9100-ride-subtype1";
+		conf-7 {
+			compatible = "qcom,qcs9100-adp";
 			fdt = "fdt-6";
 		};
-		conf-9 {
-			compatible = "qcom,qcs8300-adp-subtype1";
+		conf-8 {
+			compatible = "qcom,qcs8300-adp";
 			fdt = "fdt-7";
 		};
-		conf-10 {
-			compatible = "qcom,qcs8275-rb-subtype0";
+		conf-9 {
+			compatible = "qcom,qcs8275-iot";
 			fdt = "fdt-8";
 		};
-		conf-11 {
-			compatible = "qcom,qcs615-adp-subtype3";
+		conf-10 {
+			compatible = "qcom,qcs615-adp";
 			fdt = "fdt-9";
 		};
 	};
