@@ -62,7 +62,7 @@
 			fdt = "fdt-3";
 		};
 		conf-4 {
-			compatible = "qcom,qcs6490r10-iot-subtype2";
+			compatible = "qcom,qcs6490r3-iot-subtype2";
 			fdt = "fdt-3";
 		};
 		conf-5 {
