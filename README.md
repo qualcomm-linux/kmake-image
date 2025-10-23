@@ -68,7 +68,14 @@ Qualcomm Linux Kernel for QCS6490 Rb3Gen2.
 ```
 git clone git@github.com:qualcomm-linux/kmake-image.git
 cd kmake-image
+```
+Build docker
+```
 docker build -t kmake-image .
+```
+or
+```
+docker build --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) --build-arg USER_NAME=$(whoami) -t kmake-image .
 ```
 
 ### 2. Setup the aliases in your .bashrc
