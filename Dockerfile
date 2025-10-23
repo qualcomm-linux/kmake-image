@@ -1,5 +1,14 @@
 FROM ubuntu:24.04
 
+ARG USER_ID
+ARG GROUP_ID
+ARG USER_NAME
+
+RUN if [ -n "$USER_ID" ] && [ -n "$GROUP_ID" ] && [ -n "$USER_NAME" ]; then \
+        groupadd -g $GROUP_ID $USER_NAME && \
+        useradd -m -u $USER_ID -g $GROUP_ID -d / $USER_NAME ; \
+    fi
+
 ENV ARCH=arm64
 ENV CROSS_COMPILE=aarch64-linux-gnu-
 

@@ -62,7 +62,7 @@ sudo groupadd docker || true
 sudo usermod -aG docker $USER
 
 echo "Building Docker image..."
-docker build -t kmake-image .
+docker build --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) --build-arg USER_NAME=$(whoami) -t kmake-image .
 
 echo "Setting up Docker aliases..."
 {
