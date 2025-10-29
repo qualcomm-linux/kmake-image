@@ -194,6 +194,13 @@ fastboot reboot bootloader
 fastboot boot images/boot.img
 ```
 
+### 10. Or Build Ubuntu Kernel deb packages
+```
+  kmake O=../debian mrproper
+  kmake O=../debian defconfig
+  kmake O=../debian -j$(nproc) bindeb-pkg
+```
+
 ## Finer Details
 
 ### kmake-image-run
@@ -296,6 +303,12 @@ kmake-image-run mkbootimg \
         --pagesize 2048 \
         --output boot.img
 ```
+
+### Install kernel deb packages on Ubuntu
+For installing kernel deb packages on Ubuntu, refer [README_ubuntu](./README_ubuntu.md)
+
+### How to update kernel on Yocto
+For updating kernel on Yocto, refer [README_yocto](./README_yocto.md)
 
 ## License
 kmake-image is licensed under the [*BSD-3-clause-clear License*](https://spdx.org/licenses/BSD-3-Clause-Clear.html). See [*LICENSE*](https://github.com/qualcomm-linux/kmake-image/blob/main/LICENSE) for the full license text.
