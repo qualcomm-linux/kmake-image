@@ -52,7 +52,7 @@ Note:
 ### Example
 ```
 kmake-image-run build.sh --dtb qcs6490-rb3gen2.dtb \
-        --out kobj
+        --out kobj \
         --systemd artifacts/systemd/usr/lib/systemd/boot/efi \
         --ramdisk artifacts/ramdisk.gz \
         --images images \
@@ -194,12 +194,39 @@ fastboot reboot bootloader
 fastboot boot images/boot.img
 ```
 
-### 10. Or Build Ubuntu Kernel deb packages
+### 11. Or Build Ubuntu Kernel deb packages
 ```
   kmake O=../debian mrproper
   kmake O=../debian defconfig
   kmake O=../debian -j$(nproc) bindeb-pkg
 ```
+
+### 12. Kernel Configuration Management
+Qualcomm's kernel setup builds on top of the standard ***arch/arm64/configs/defconfig*** by introducing three additional configuration fragments:
+
+- **arch/arm64/configs/prune.config** : Disables support for non-Qualcomm architectures to streamline the kernel for Qualcomm platforms
+
+- **arch/arm64/configs/qcom.config** : Enables Qualcomm-specific kernel configurations that are not acceptable within the community's common defconfig
+
+- **kernel/configs/debug.config** : Enables Qualcomm Debug Configs
+
+To modify kernel configuration using menuconfig, follow these steps:
+```
+kmake O=../kobj menuconfig
+kmake O=../kobj savedefconfig
+```
+This will generate a new defconfig file at ../kobj/defconfig.
+
+#### Applying Changes
+
+- Compare the newly generated **defconfig** with the base **arch/arm64/configs/defconfig**
+- Note: The community's common defconfig is not sorted, so you may see many differences
+- Identify only the relevant changes you intend to introduce
+- Apply those changes to the appropriate fragment:
+  - Use prune.config for architecture exclusions
+  - Use qcom.config for Qualcomm-specific features
+  - Use debug.config for debugging options
+
 
 ## Finer Details
 
