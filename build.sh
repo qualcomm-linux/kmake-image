@@ -76,12 +76,18 @@ fi
 
 # Check for each config fragment and append if present
 CONFIG_FRAGMENTS=""
-[[ -f "arch/arm64/configs/prune.config" ]] && CONFIG_FRAGMENTS+=" prune.config"
-[[ -f "arch/arm64/configs/qcom.config" ]] && CONFIG_FRAGMENTS+=" qcom.config"
-[[ "$NO_DEBUG" = false && -f "kernel/configs/debug.config" ]] && CONFIG_FRAGMENTS+=" debug.config"
+[[ -f "arch/arm64/configs/prune.config" ]] && CONFIG_FRAGMENTS+=" arch/arm64/configs/prune.config"
+[[ -f "arch/arm64/configs/qcom.config" ]] && CONFIG_FRAGMENTS+=" arch/arm64/configs/qcom.config"
+[[ "$NO_DEBUG" = false && -f "kernel/configs/debug.config" ]] && CONFIG_FRAGMENTS+=" kernel/configs/debug.config"
 
-# Run make with available config fragments
-make O="$KERNEL_BUILD_ARTIFACTS" defconfig $CONFIG_FRAGMENTS
+# Create build artifacts directory
+mkdir -p "$KERNEL_BUILD_ARTIFACTS"
+
+# Merge configs fragments
+env -u KCONFIG_CONFIG ./scripts/kconfig/merge_config.sh -m \
+    -O "$KERNEL_BUILD_ARTIFACTS" \
+	arch/arm64/configs/defconfig "$CONFIG_FRAGMENTS"
+make O="$KERNEL_BUILD_ARTIFACTS" olddefconfig
 make O="$KERNEL_BUILD_ARTIFACTS" -j$(nproc)
 make O="$KERNEL_BUILD_ARTIFACTS" -j$(nproc) dir-pkg INSTALL_MOD_STRIP=1
 
