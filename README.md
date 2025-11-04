@@ -105,7 +105,9 @@ dpkg-deb -xv artifacts/systemd-boot-efi.deb artifacts/systemd
 ### 4. Build Kernel
 ```
 cd kernel
-kmake O=../kobj defconfig prune.config qcom.config debug.config
+mkdir -p ../kobj
+env -u KCONFIG_CONFIG ./scripts/kconfig/merge_config.sh -m -O ../kobj arch/arm64/configs/defconfig arch/arm64/configs/prune.config arch/arm64/configs/qcom.config kernel/configs/debug.config
+kmake O=../kobj olddefconfig
 kmake O=../kobj -j$(nproc)
 kmake O=../kobj -j$(nproc) dir-pkg INSTALL_MOD_STRIP=1
 ```
