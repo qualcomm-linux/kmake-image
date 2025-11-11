@@ -20,9 +20,9 @@ RUN printf "Types: deb\nURIs: http://archive.ubuntu.com/ubuntu/\nSuites: noble n
     apt-get update && \
     apt-get install -y build-essential git clang-15 lld-15 flex bison bc libssl-dev curl kmod systemd-ukify && \
     apt-get install -y debhelper-compat libdw-dev:amd64 libelf-dev:amd64 && \
-    apt-get install -y rsync mtools dosfstools lavacli u-boot-tools b4 cpio && \
+    apt-get install -y rsync mtools dosfstools lavacli u-boot-tools cpio && \
     apt-get install -y gcc-aarch64-linux-gnu && \
-    apt-get install -y python3-pip swig yamllint && \
+    apt-get install -y python3-pip python3-venv swig yamllint && \
     apt install -y python3-setuptools python3-wheel && \
     python3 -m pip install --break-system-packages dtschema==2025.08 jinja2 ply GitPython && \
     apt-get install -y yq && \
@@ -35,3 +35,11 @@ RUN printf "Types: deb\nURIs: http://archive.ubuntu.com/ubuntu/\nSuites: noble n
     dpkg --add-architecture arm64 && \
     apt-get install -y libssl-dev:arm64 && \
     rm -rf /var/lib/apt/lists/*
+
+# Create a Python virtual environment and install b4
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+ENV XDG_CACHE_HOME=/opt/venv/.cache
+ENV XDG_DATA_HOME=/opt/venv/.local/share
+RUN mkdir -p /opt/venv/.cache /opt/venv/.local/share && chmod -R 777 /opt/venv/.cache /opt/venv/.local/share && \
+    pip install --upgrade pip && pip install b4
