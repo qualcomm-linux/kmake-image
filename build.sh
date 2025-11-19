@@ -34,7 +34,7 @@ KERNEL_BUILD_ARTIFACTS="$(realpath ../kobj)"
 SYSTEMD_BOOT_DIR="$(realpath ../artifacts/systemd/usr/lib/systemd/boot/efi)"
 RAMDISK="$(realpath ../artifacts/ramdisk.gz)"
 IMAGES_OUTPUT="$(realpath ../images)"
-KERNEL_CMDLINE="console=ttyMSM0,115200n8 earlycon qcom_geni_serial.con_enabled=1 qcom_scm.download_mode=1 reboot=panic_warm mitigations=auto"
+KERNEL_CMDLINE="console=ttyMSM0,115200n8 earlycon qcom_geni_serial.con_enabled=1 qcom_scm.download_mode=1 reboot=panic_warm panic=-1 mitigations=auto"
 NO_DEBUG=false
 
 # Parse long options
