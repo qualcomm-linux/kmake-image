@@ -13,7 +13,7 @@
 #   --systemd   Path to systemd boot binaries directory (default: ../artifacts/systemd/usr/lib/systemd/boot/efi)
 #   --ramdisk   Path to ramdisk image (default: ../artifacts/ramdisk.gz)
 #   --images    Output directory for generated images (default: ../images)
-#   --cmdline   Kernel command line arguments (default: predefined string)
+#   --cmdline   Append arguments to Default Kernel command line (default: predefined string)
 #   --no-debug  Skip adding debug.config to kernel build
 #
 # Description:
@@ -48,7 +48,7 @@ while [[ $# -gt 0 ]]; do
         --systemd) SYSTEMD_BOOT_DIR="$(realpath "$2")"; shift 2 ;;
         --ramdisk) RAMDISK="$(realpath "$2")"; shift 2 ;;
         --images) IMAGES_OUTPUT="$(realpath "$2")"; shift 2 ;;
-        --cmdline) KERNEL_CMDLINE="$2"; shift 2 ;;
+        --cmdline) KERNEL_CMDLINE="$KERNEL_CMDLINE $2"; shift 2 ;;
         --no-debug) NO_DEBUG=true; shift ;;
         --) shift; break ;;
         *) echo "Unknown option: $1"; exit 1 ;;
