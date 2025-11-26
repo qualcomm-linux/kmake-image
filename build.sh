@@ -48,7 +48,7 @@ while [[ $# -gt 0 ]]; do
         --systemd) SYSTEMD_BOOT_DIR="$(realpath "$2")"; shift 2 ;;
         --ramdisk) RAMDISK="$(realpath "$2")"; shift 2 ;;
         --images) IMAGES_OUTPUT="$(realpath "$2")"; shift 2 ;;
-        --cmdline) KERNEL_CMDLINE="$2"; shift 2 ;;
+        --cmdline) KERNEL_CMDLINE="$KERNEL_CMDLINE $2"; shift 2 ;;
         --no-debug) NO_DEBUG=true; shift ;;
         --) shift; break ;;
         *) echo "Unknown option: $1"; exit 1 ;;
