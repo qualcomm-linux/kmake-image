@@ -62,8 +62,19 @@ if [[ -z "$DTB_FILENAME" ]]; then
     exit 1
 fi
 
+# Check ramdisk
+if [[ ! -f "$RAMDISK" ]]; then
+    echo "[ERROR] Ramdisk file not found at $RAMDISK"
+    exit 1
+fi
+
+# Check systemd boot files
+if [[ ! -f "$SYSTEMD_BOOT_DIR/systemd-bootaa64.efi" ]] || [[ ! -f "$SYSTEMD_BOOT_DIR/linuxaa64.efi.stub" ]]; then
+    echo "[ERROR] Missing systemd boot files in $SYSTEMD_BOOT_DIR"
+    exit 1
+fi
+
 mkdir -p "$IMAGES_OUTPUT"
-KERNEL_IMAGE_PATH="$KERNEL_BUILD_ARTIFACTS/arch/arm64/boot/Image"
 
 # Build the kernel using Docker
 echo "Building kernel..."
@@ -84,23 +95,27 @@ CONFIG_FRAGMENTS=""
 mkdir -p "$KERNEL_BUILD_ARTIFACTS"
 
 # Merge configs fragments
+if [[ -n "$CONFIG_FRAGMENTS" ]]; then
 env -u KCONFIG_CONFIG ./scripts/kconfig/merge_config.sh -m \
     -O "$KERNEL_BUILD_ARTIFACTS" \
 	arch/arm64/configs/defconfig "$CONFIG_FRAGMENTS"
+else
+    cp arch/arm64/configs/defconfig "$KERNEL_BUILD_ARTIFACTS/.config"
+fi
 make O="$KERNEL_BUILD_ARTIFACTS" olddefconfig
 make O="$KERNEL_BUILD_ARTIFACTS" -j$(nproc)
 make O="$KERNEL_BUILD_ARTIFACTS" -j$(nproc) dir-pkg INSTALL_MOD_STRIP=1
 
 # Locate DTB in kernel build artifacts
 DTB_PATH=$(find "$KERNEL_BUILD_ARTIFACTS" -name "$DTB_FILENAME" -print -quit)
-if [ -z "DTB_PATH" ];  then
-    echo "Error: DTB file '$DTB_FILENAME' not found."
+if [[ -z "$DTB_PATH" ]];  then
+    echo "Error: DTB file '$DTB_FILENAME' not found in $KERNEL_BUILD_ARTIFACTS."
     exit 1
 fi
 
 # Package DLKMs into ramdisk
 CONCATENATE_RAMDISK="$IMAGES_OUTPUT/$(basename "$RAMDISK" .gz)_$(date +"%Y%m%d_%H%M%S").gz"
-cp $RAMDISK $CONCATENATE_RAMDISK
+cp "$RAMDISK" "$CONCATENATE_RAMDISK"
 (
     cd "$KERNEL_BUILD_ARTIFACTS/tar-install"
     find lib/modules | cpio -o -H newc -R +0:+0 | gzip -9 >> "$CONCATENATE_RAMDISK"
@@ -144,3 +159,5 @@ mkbootimg --header_version 2 \
     --base 0x80000000 \
     --pagesize 2048 \
     --output "$IMAGES_OUTPUT/boot.img"
+
+echo "Build completed successfully. Images are in $IMAGES_OUTPUT."
