@@ -89,10 +89,10 @@ function create_fit_image() {
     echo "Packing final image into fit_dtb.bin..."
     SELF_DIR="$(dirname "$(realpath "$0")")"
     # Call generate_boot_bins.sh from the same directory
-    "${SELF_DIR}/generate_boot_bins.sh" bin --input "${OUTPUT_DIR}/fit_dir" --output "${OUTPUT_DIR}/fit_dtb.bin"
+    "${SELF_DIR}/generate_boot_bins.sh" bin --input "${OUTPUT_DIR}/fit_dir" --output "${OUTPUT_DIR}/dtb.bin"
 
 }
 
 echo "Starting FIT image creation..."
 create_fit_image
-echo "FIT image created at ${OUTPUT_DIR}/fit_dtb.bin"
+echo "FIT image created at ${OUTPUT_DIR}/dtb.bin"
