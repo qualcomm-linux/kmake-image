@@ -4,11 +4,12 @@
 # make_fitimage.sh - FIT image packaging script for Qualcomm Linux development
 #
 # Usage:
-#   ./make_fitimage.sh --dtb <metadata_dts> --its <fitimage_its> [--kob <kernel_build_artifacts>] [--output <output_dir>]
+#   ./make_fitimage.sh --metadata <metadata_dts> --its <fitimage_its> \
+#       [--kobj <kernel_build_artifacts>] [--output <output_dir>]
 #
 # Options:
-#   --metadata  Path to metadata DTS file (mandatory)
-#   --its       Path to FIT image ITS file (mandatory)
+#   --metadata  Path to metadata DTS file (default: ../artifacts/qcom-dtb-metadata/qcom-metadata.dts)
+#   --its       Path to FIT image ITS file (default: ../artifacts/qcom-dtb-metadata/qcom-fitimage.its)
 #   --kobj      Path to kernel build artifacts directory (default: ../kobj)
 #   --output    Output directory for generated FIT image (default: ../images)
 #   --help      Show this help message and exit
@@ -16,7 +17,7 @@
 # Description:
 #   This script generates a FIT image using Qualcomm metadata and ITS files.
 #   It compiles the metadata DTS to DTB, creates the FIT image using mkimage,
-#   and packages the final image using generate_boot_bins.sh
+#   and packages the final image using generate_boot_bins.sh.
 ###############################################################################
 
 set -e
@@ -86,7 +87,10 @@ function create_fit_image() {
     mkimage -f "${KERNEL_BUILD_ARTIFACTS}/qcom-fitimage.its" "${OUTPUT_DIR}/fit_dir/qclinux_fit.img" -E -B 8
 
     echo "Packing final image into fit_dtb.bin..."
-    generate_boot_bins.sh bin --input "${OUTPUT_DIR}/fit_dir" --output "${OUTPUT_DIR}/fit_dtb.bin"
+    SELF_DIR="$(dirname "$(realpath "$0")")"
+    # Call generate_boot_bins.sh from the same directory
+    "${SELF_DIR}/generate_boot_bins.sh" bin --input "${OUTPUT_DIR}/fit_dir" --output "${OUTPUT_DIR}/fit_dtb.bin"
+
 }
 
 echo "Starting FIT image creation..."
