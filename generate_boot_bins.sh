@@ -6,13 +6,16 @@ BOOTIMG_EXTRA_SPACE="512"
 MKFSVFAT_EXTRAOPTS="-S 512"
 
 show_help() {
-    echo "Usage: generate_boot_bins.sh [command] [options]"
+    echo "Usage: generate_boot_bins.sh [global options] [command] [options]"
     echo ""
     echo "Commands:"
     echo "  efi       Generate EFI image"
     echo "  dtb       Generate DTB image"
     echo "  fatimg    Generate FAT image"
     echo "  help      Show this help message"
+    echo ""
+    echo "Global options:"
+    echo "  --sector-size BYTES    Set logical sector size passed to mkfs.vfat (default: 512)"
     echo ""
     echo "efi command options:"
     echo "  --ramdisk PATH         Path to the ramdisk file"
@@ -82,7 +85,7 @@ generate_efi_image() {
         case $1 in
             --ramdisk) RAMDISK="$2"; shift ;;
             --systemd-boot) SYSTEMD_BOOT="$2"; shift ;;
-			--stub) STUB="$2"; shift ;;
+            --stub) STUB="$2"; shift ;;
             --linux) LINUX_IMAGE="$2"; shift ;;
             --devicetree) DTB="$2"; shift ;;
             --cmdline) KERNEL_VENDOR_CMDLINE="$2"; shift ;;
@@ -201,6 +204,19 @@ generate_fat_image() {
     generate_bin "${INPUT_DIR}" "${OUTPUT_PATH}"
 }
 
+# ------------------------------------------------------------
+# Minimal addition: parse global --sector-size before command
+# ------------------------------------------------------------
+if [[ "$1" == "--sector-size" ]]; then
+    if [[ -n "$2" ]]; then
+        MKFSVFAT_EXTRAOPTS="-S $2"
+        shift 2
+    else
+        echo "Error: --sector-size requires a value (e.g., 512)"
+        exit 1
+    fi
+fi
+
 # Main script logic
 if [[ "$1" == "efi" ]]; then
     shift
@@ -211,7 +227,7 @@ elif [[ "$1" == "dtb" ]]; then
 elif [[ "$1" == "bin" ]]; then
     shift
     generate_fat_image "$@"
-elif [[ "$1" == "--help" ]]; then
+elif [[ "$1" == "--help" || "$1" == "help" ]]; then
     show_help
 else
     echo "Unknown command: $1"
