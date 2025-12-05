@@ -67,6 +67,15 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# ---------------- Install prerequisites (root, Debian/Ubuntu only) ------------
+if command -v apt-get >/dev/null 2>&1; then
+    echo "Ensuring prerequisites are installed: device-tree-compiler, u-boot-tools"
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update -y
+    apt-get install -y device-tree-compiler u-boot-tools
+fi
+# -----------------------------------------------------------------------------
+
 # Resolve paths
 KERNEL_BUILD_ARTIFACTS="$(realpath "$KERNEL_BUILD_ARTIFACTS")"
 OUTPUT_DIR="$(realpath "$OUTPUT_DIR")"
