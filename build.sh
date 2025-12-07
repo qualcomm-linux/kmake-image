@@ -136,6 +136,7 @@ generate_boot_bins.sh dtb \
 
 # Package kernel image into boot binary
 echo "Creating boot.img..."
+KERNEL_IMAGE="$KERNEL_BUILD_ARTIFACTS"/arch/arm64/boot/Image.gz
 mkbootimg --header_version 2 \
     --kernel "$KERNEL_IMAGE" \
     --dtb "$DTB_PATH" \
