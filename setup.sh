@@ -29,7 +29,7 @@ set -e
 KERNEL_REPO=https://github.com/qualcomm-linux/kernel.git
 KERNEL_BRANCH=qcom-next
 KERNEL_PATH="../kernel"
-RAMDISK_PATH="https://snapshots.linaro.org/member-builds/qcomlt/testimages/arm64/1379/initramfs-test-image-qemuarm64-20230321073831-1379.rootfs.cpio.gz"
+RAMDISK_PATH="http://storage.kernelci.org/images/rootfs/buildroot/buildroot-baseline/20230703.0/arm64/rootfs.cpio.gz"
 
 # Parse long options
 eval set -- "$(getopt -n "$0" -o "" \
