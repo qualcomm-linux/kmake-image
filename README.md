@@ -93,7 +93,7 @@ git clone git@github.com:qualcomm-linux/kernel.git
 #### Fetch Ramdisk (For arm64)
 ```
 mkdir artifacts
-wget -O artifacts/ramdisk.gz https://snapshots.linaro.org/member-builds/qcomlt/testimages/arm64/1379/initramfs-test-image-qemuarm64-20230321073831-1379.rootfs.cpio.gz
+wget -O artifacts/ramdisk.gz http://storage.kernelci.org/images/rootfs/buildroot/buildroot-baseline/20230703.0/arm64/rootfs.cpio.gz
 ```
 
 #### Fetch systemd boot binaries
