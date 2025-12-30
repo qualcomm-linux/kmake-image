@@ -15,6 +15,7 @@
 #   --images    Output directory for generated images (default: ../images)
 #   --cmdline   Append arguments to Default Kernel command line (default: predefined string)
 #   --no-debug  Skip adding debug.config to kernel build
+#   --help      Show help message
 #
 # Description:
 #   This script builds the kernel, packages modules into a ramdisk, and generates
@@ -28,6 +29,28 @@
 
 set -euo pipefail
 
+show_help() {
+    echo "Usage: build.sh --dtb <your.dtb> [--out <kernel_dir>] [--systemd <systemd_boot_dir>]"
+    echo "                [--ramdisk <ramdisk_path>] [--images <output_dir>] [--cmdline <cmdline>]"
+    echo "                [--no-debug]"
+    echo ""
+    echo "This script builds the kernel, packages modules into a ramdisk, and generates bootable images:"
+    echo "  - efi.bin"
+    echo "  - efi_with_dtb.bin"
+    echo "  - dtb.bin"
+    echo "  - boot.img"
+    echo ""
+    echo "Options:"
+    echo "  --dtb       Name of the DTB file to use (required). The file must be present under the kernel build artifacts."
+    echo "  --out       Path to kernel build artifacts directory (default: ../kobj)"
+    echo "  --systemd   Path to systemd boot binaries directory (default: ../artifacts/systemd/usr/lib/systemd/boot/efi)"
+    echo "  --ramdisk   Path to ramdisk image (default: ../artifacts/ramdisk.gz)"
+    echo "  --images    Output directory for generated images (default: ../images)"
+    echo "  --cmdline   Append arguments to the default kernel command line"
+    echo "  --no-debug  Skip adding kernel/configs/debug.config"
+    echo "  --help      Show this help message"
+}
+
 # Default values
 DTB_FILENAME="${1:-}"
 KERNEL_BUILD_ARTIFACTS="$(realpath ../kobj)"
@@ -39,7 +62,7 @@ NO_DEBUG=false
 
 # Parse long options
 eval set -- "$(getopt -n "$0" -o "" \
-    --long dtb:,out:,systemd:,ramdisk:,images:,cmdline: -- "$@")"
+    --long dtb:,out:,systemd:,ramdisk:,images:,cmdline:,no-debug,help -- "$@")"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -50,8 +73,9 @@ while [[ $# -gt 0 ]]; do
         --images) IMAGES_OUTPUT="$(realpath "$2")"; shift 2 ;;
         --cmdline) KERNEL_CMDLINE="$KERNEL_CMDLINE $2"; shift 2 ;;
         --no-debug) NO_DEBUG=true; shift ;;
+        --help) show_help; exit 0 ;;
         --) shift; break ;;
-        *) echo "Unknown option: $1"; exit 1 ;;
+        *) echo "Unknown option: $1"; show_help ; exit 1 ;;
     esac
 done
 
@@ -102,6 +126,7 @@ env -u KCONFIG_CONFIG ./scripts/kconfig/merge_config.sh -m \
 else
     cp arch/arm64/configs/defconfig "$KERNEL_BUILD_ARTIFACTS/.config"
 fi
+
 make O="$KERNEL_BUILD_ARTIFACTS" olddefconfig
 make O="$KERNEL_BUILD_ARTIFACTS" -j$(nproc)
 make O="$KERNEL_BUILD_ARTIFACTS" -j$(nproc) dir-pkg INSTALL_MOD_STRIP=1
@@ -133,7 +158,6 @@ generate_boot_bins.sh efi \
     --output "$IMAGES_OUTPUT"
 
 echo "Creating efi_with_dtb.bin..."
-KERNEL_IMAGE="$KERNEL_BUILD_ARTIFACTS"/arch/arm64/boot/Image
 generate_boot_bins.sh efi \
     --ramdisk "$CONCATENATE_RAMDISK" \
     --systemd-boot "$SYSTEMD_BOOT_DIR/systemd-bootaa64.efi" \
