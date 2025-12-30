@@ -4,12 +4,13 @@
 # setup.sh - Environment setup script for Qualcomm Linux kernel development
 #
 # Usage:
-#   ./setup.sh [--kernel <kernel_repo_url>] [--branch <branch_name>] [--ramdisk]
+#   ./setup.sh [--kernel <kernel_repo_url>] [--branch <branch_name>] [--ramdisk] [--help]
 #
 # Options:
 #   --kernel   URL of the kernel repository to clone (default: https://github.com/qualcomm-linux/kernel.git)
 #   --branch   Branch name to checkout from the kernel repository (default: qcom-next)
 #   --ramdisk  If specified, downloads a default ramdisk image
+#   --help     Show help message
 #
 # Description:
 #   This script sets up a development environment for building the Qualcomm
@@ -25,6 +26,21 @@
 
 set -e
 
+show_help() {
+    echo "Usage: ./setup.sh [options]"
+    echo ""
+    echo "Options:"
+    echo "  --kernel <URL>       Kernel repository URL (default: https://github.com/qualcomm-linux/kernel.git)"
+    echo "  --branch <name>      Branch name to checkout (default: qcom-next)"
+    echo "  --ramdisk            Downloads default ramdisk image"
+    echo "  --help               Show this help message"
+    echo ""
+    echo "Description:"
+    echo "  Sets up a Qualcomm Linux kernel development environment using Docker."
+    echo "  Installs Docker if missing, builds a Docker image, configures aliases,"
+    echo "  clones the kernel repo, and downloads systemd boot binaries and ramdisk."
+}
+
 # Default values
 KERNEL_REPO=https://github.com/qualcomm-linux/kernel.git
 KERNEL_BRANCH=qcom-next
@@ -33,15 +49,16 @@ RAMDISK_PATH="http://storage.kernelci.org/images/rootfs/buildroot/buildroot-base
 
 # Parse long options
 eval set -- "$(getopt -n "$0" -o "" \
-    --long kernel:,branch:,artifacts: -- "$@")"
+    --long kernel:,branch:,ramdisk:,help -- "$@")"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --kernel) KERNEL_REPO="$2"; shift 2 ;;
         --branch) KERNEL_BRANCH="$2"; shift 2 ;;
         --ramdisk) RAMDISK_PATH="$2"; shift 2 ;;
+        --help) show_help; exit 0 ;;
         --) shift; break ;;
-        *) echo "Unknown option: $1"; exit 1 ;;
+        *) echo "Unknown option: $1"; show_help ; exit 1 ;;
     esac
 done
 
