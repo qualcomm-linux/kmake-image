@@ -1,5 +1,47 @@
 #!/bin/bash
 
+###############################################################################
+# generate_boot_bins.sh - Boot image generation utility for Qualcomm Linux
+#
+# Usage:
+#   ./generate_boot_bins.sh [command] [options]
+#
+# Commands:
+#   efi       Generate EFI image (Unified Kernel Image with optional DTB)
+#   dtb       Generate DTB image (FAT-formatted image containing DTB)
+#   fatimg    Generate FAT image from a directory
+#   help      Show help message
+#
+# Description:
+#   This script creates bootable binary images required for Qualcomm Linux
+#   development. It supports:
+#     - EFI images using systemd-boot and ukify (with optional DTB integration)
+#     - DTB images packaged in a FAT filesystem
+#     - Generic FAT images for boot partitions
+#
+# Options for efi:
+#   --ramdisk PATH         Path to the ramdisk file
+#   --systemd-boot PATH    Path to the systemd boot binary (bootaa64.efi)
+#   --stub PATH            Path to EFI stub (linuxaa64.efi.stub)
+#   --linux PATH           Path to the Linux kernel Image
+#   --devicetree PATH      Optional DTB file path
+#   --cmdline CMDLINE      Optional kernel command line parameters
+#   --output DIR           Output directory for generated EFI image
+#
+# Options for dtb:
+#   --input PATH           Path to the DTB file
+#   --output DIR           Output directory for generated DTB image
+#
+# Options for fatimg:
+#   --input DIR            Path to the input directory
+#   --output PATH          Output file path for FAT image
+#
+# Notes:
+#   - Requires mkfs.vfat and mtools for FAT image creation.
+#   - Uses ukify for Unified Kernel Image (EFI) generation.
+#   - Ensure all required binaries (systemd-boot, stub, Linux Image) exist.
+###############################################################################
+
 # Default values
 BOOTIMG_VOLUME_ID="BOOT"
 BOOTIMG_EXTRA_SPACE="512"
@@ -211,7 +253,7 @@ elif [[ "$1" == "dtb" ]]; then
 elif [[ "$1" == "bin" ]]; then
     shift
     generate_fat_image "$@"
-elif [[ "$1" == "--help" ]]; then
+elif [[ "$1" == "--help" ]] || [[ "$1" == "help" ]]; then
     show_help
 else
     echo "Unknown command: $1"
