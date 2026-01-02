@@ -4,14 +4,14 @@
 # make_fitimage.sh - FIT image packaging script for Qualcomm Linux development
 #
 # Usage:
-#   ./make_fitimage.sh --dtb <metadata_dts> --its <fitimage_its> [--kob <kernel_build_artifacts>] [--output <output_dir>]
+#   ./make_fitimage.sh --metadata <metadata_dts> --its <fitimage_its> [--kobj <kernel_build_artifacts>] [--output <output_dir>]
 #
 # Options:
 #   --metadata  Path to metadata DTS file (mandatory)
 #   --its       Path to FIT image ITS file (mandatory)
 #   --kobj      Path to kernel build artifacts directory (default: ../kobj)
 #   --output    Output directory for generated FIT image (default: ../images)
-#   --help      Show this help message and exit
+#   --help      Show help message
 #
 # Description:
 #   This script generates a FIT image using Qualcomm metadata and ITS files.
@@ -55,7 +55,7 @@ while [[ $# -gt 0 ]]; do
         --its) FIT_IMAGE_ITS_PATH="$2"; shift 2 ;;
         --output) OUTPUT_DIR="$2"; shift 2 ;;
         --help) show_help; exit 0 ;;
-        *) echo "Unknown option: $1"; exit 1 ;;
+        *) echo "Unknown option: $1"; show_help ; exit 1 ;;
     esac
 done
 
