@@ -32,9 +32,9 @@ RUN printf "Types: deb\nURIs: http://archive.ubuntu.com/ubuntu/\nSuites: noble n
     apt-get install -y cmake libyaml-dev && \
     curl "https://android.googlesource.com/platform/system/tools/mkbootimg/+/refs/heads/android12-release/mkbootimg.py?format=TEXT" | base64 --decode > /usr/bin/mkbootimg && \
     chmod +x /usr/bin/mkbootimg && \
-    chmod +x /usr/bin/generate_boot_bins.sh && \
-    chmod +x /usr/bin/build.sh && \
-    chmod +x /usr/bin/make_fitimage.sh && \
+    chmod 755 /usr/bin/generate_boot_bins.sh && \
+    chmod 755 /usr/bin/build.sh && \
+    chmod 755 /usr/bin/make_fitimage.sh && \
     dpkg --add-architecture arm64 && \
     apt-get install -y libssl-dev:arm64 && \
     rm -rf /var/lib/apt/lists/*
