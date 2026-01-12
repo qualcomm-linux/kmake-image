@@ -53,10 +53,10 @@ show_help() {
 
 # Default values
 DTB_FILENAME="${1:-}"
-KERNEL_BUILD_ARTIFACTS="$(realpath ../kobj)"
-SYSTEMD_BOOT_DIR="$(realpath ../artifacts/systemd/usr/lib/systemd/boot/efi)"
-RAMDISK="$(realpath ../artifacts/ramdisk.gz)"
-IMAGES_OUTPUT="$(realpath ../images)"
+KERNEL_BUILD_ARTIFACTS="../kobj"
+SYSTEMD_BOOT_DIR="../artifacts/systemd/usr/lib/systemd/boot/efi"
+RAMDISK="../artifacts/ramdisk.gz"
+IMAGES_OUTPUT="../images"
 KERNEL_CMDLINE="console=ttyMSM0,115200n8 earlycon qcom_geni_serial.con_enabled=1 qcom_scm.download_mode=1 reboot=panic_warm panic=-1 mitigations=auto"
 NO_DEBUG=false
 
@@ -85,6 +85,12 @@ if [[ -z "$DTB_FILENAME" ]]; then
     echo "Usage: $0 --dtb your.dtb [--out kernel_dir] [--systemd systemd_boot_dir] [--ramdisk ramdisk_path] [--images output_dir] [--cmdline cmdline] [--no-debug]"
     exit 1
 fi
+
+# Resolve to absolute paths
+KERNEL_BUILD_ARTIFACTS="$(realpath "$KERNEL_BUILD_ARTIFACTS")"
+SYSTEMD_BOOT_DIR="$(realpath "$SYSTEMD_BOOT_DIR")"
+RAMDISK="$(realpath "$RAMDISK")"
+IMAGES_OUTPUT="$(realpath "$IMAGES_OUTPUT")"
 
 # Check ramdisk
 if [[ ! -f "$RAMDISK" ]]; then
