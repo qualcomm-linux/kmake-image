@@ -4,17 +4,20 @@
 # build.sh - Kernel image packaging script for Qualcomm Linux development
 #
 # Usage:
-#   ./build.sh --dtb <your.dtb> [--out <kernel_dir>] [--systemd <systemd_boot_dir>]
-#              [--ramdisk <ramdisk_path>] [--images <output_dir>] [--cmdline <cmdline>] [--no-debug]
+#   ./build.sh [--dtb <your.dtb>] [--out <kernel_dir>] [--systemd <systemd_boot_dir>]
+#              [--ramdisk <ramdisk_path>] [--images <output_dir>] [--cmdline <cmdline>] [--no-debug] \
+#              [--metadata <metadata_dts>] [--its <fitimage_its>]
 #
 # Options:
-#   --dtb       Name of the DTB file to use (required)
+#   --dtb       Name of the DTB file to use
 #   --out       Path to kernel build artifacts directory (default: ../kobj)
 #   --systemd   Path to systemd boot binaries directory (default: ../artifacts/systemd/usr/lib/systemd/boot/efi)
 #   --ramdisk   Path to ramdisk image (default: ../artifacts/ramdisk.gz)
 #   --images    Output directory for generated images (default: ../images)
 #   --cmdline   Append arguments to Default Kernel command line (default: predefined string)
 #   --no-debug  Skip adding debug.config to kernel build
+#   --metadata  Path to metadata DTS file (default: ../artifacts/qcom-dtb-metadata/qcom-metadata.dts)
+#   --its       Path to FIT image ITS file (default: ../artifacts/qcom-dtb-metadata/qcom-fitimage.its)
 #   --help      Show help message
 #
 # Description:
@@ -25,6 +28,9 @@
 # Notes:
 #   - Run this script from within the kernel source directory.
 #   - DTB file must exist in the kernel build artifacts directory.
+#   - When --dtb is not provided, generates FIT DTB image based upon the METADATA
+#     and ITS configuration being passed.
+#   - It is mandatory to pass dtb to generate boot.img and efi_with_dtb.bin
 ###############################################################################
 
 set -euo pipefail
@@ -41,13 +47,15 @@ show_help() {
     echo "  - boot.img"
     echo ""
     echo "Options:"
-    echo "  --dtb       Name of the DTB file to use (required). The file must be present under the kernel build artifacts."
+    echo "  --dtb       Name of the DTB file to use. The file must be present under the kernel build artifacts."
     echo "  --out       Path to kernel build artifacts directory (default: ../kobj)"
     echo "  --systemd   Path to systemd boot binaries directory (default: ../artifacts/systemd/usr/lib/systemd/boot/efi)"
     echo "  --ramdisk   Path to ramdisk image (default: ../artifacts/ramdisk.gz)"
     echo "  --images    Output directory for generated images (default: ../images)"
     echo "  --cmdline   Append arguments to the default kernel command line"
     echo "  --no-debug  Skip adding kernel/configs/debug.config"
+    echo "  --metadata  Path to metadata DTS file (default: ../artifacts/qcom-dtb-metadata/qcom-metadata.dts)"
+    echo "  --its       Path to FIT image ITS file (default: ../artifacts/qcom-dtb-metadata/qcom-fitimage.its)"
     echo "  --help      Show this help message"
 }
 
@@ -59,10 +67,12 @@ RAMDISK="../artifacts/ramdisk.gz"
 IMAGES_OUTPUT="../images"
 KERNEL_CMDLINE="console=ttyMSM0,115200n8 earlycon qcom_geni_serial.con_enabled=1 qcom_scm.download_mode=1 reboot=panic_warm panic=-1 mitigations=auto"
 NO_DEBUG=false
+FIT_METADATA_DTS="../artifacts/qcom-dtb-metadata/qcom-metadata.dts"
+FIT_IMAGE_ITS="../artifacts/qcom-dtb-metadata/qcom-fitimage.its"
 
 # Parse long options
 eval set -- "$(getopt -n "$0" -o "" \
-    --long dtb:,out:,systemd:,ramdisk:,images:,cmdline:,no-debug,help -- "$@")"
+    --long dtb:,out:,systemd:,ramdisk:,images:,cmdline:,no-debug,metadata:,its:,help -- "$@")"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -73,18 +83,13 @@ while [[ $# -gt 0 ]]; do
         --images) IMAGES_OUTPUT="$(realpath "$2")"; shift 2 ;;
         --cmdline) KERNEL_CMDLINE="$KERNEL_CMDLINE $2"; shift 2 ;;
         --no-debug) NO_DEBUG=true; shift ;;
+        --metadata) FIT_METADATA_DTS="$(realpath "$2")"; shift 2 ;;
+        --its) FIT_IMAGE_ITS="$(realpath "$2")"; shift 2 ;;
         --help) show_help; exit 0 ;;
         --) shift; break ;;
         *) echo "Unknown option: $1"; show_help ; exit 1 ;;
     esac
 done
-
-# Check input dtb
-if [[ -z "$DTB_FILENAME" ]]; then
-    echo "Error: No DTB file provided."
-    echo "Usage: $0 --dtb your.dtb [--out kernel_dir] [--systemd systemd_boot_dir] [--ramdisk ramdisk_path] [--images output_dir] [--cmdline cmdline] [--no-debug]"
-    exit 1
-fi
 
 # Resolve to absolute paths
 KERNEL_BUILD_ARTIFACTS="$(realpath "$KERNEL_BUILD_ARTIFACTS")"
@@ -137,13 +142,6 @@ make O="$KERNEL_BUILD_ARTIFACTS" olddefconfig
 make O="$KERNEL_BUILD_ARTIFACTS" -j$(nproc)
 make O="$KERNEL_BUILD_ARTIFACTS" -j$(nproc) dir-pkg INSTALL_MOD_STRIP=1
 
-# Locate DTB in kernel build artifacts
-DTB_PATH=$(find "$KERNEL_BUILD_ARTIFACTS" -name "$DTB_FILENAME" -print -quit)
-if [[ -z "$DTB_PATH" ]];  then
-    echo "Error: DTB file '$DTB_FILENAME' not found in $KERNEL_BUILD_ARTIFACTS."
-    exit 1
-fi
-
 # Package DLKMs into ramdisk
 CONCATENATE_RAMDISK="$IMAGES_OUTPUT/$(basename "$RAMDISK" .gz)_$(date +"%Y%m%d_%H%M%S").gz"
 cp "$RAMDISK" "$CONCATENATE_RAMDISK"
@@ -163,31 +161,47 @@ generate_boot_bins.sh efi \
     --cmdline "${KERNEL_CMDLINE:-}" \
     --output "$IMAGES_OUTPUT"
 
-echo "Creating efi_with_dtb.bin..."
-generate_boot_bins.sh efi \
-    --ramdisk "$CONCATENATE_RAMDISK" \
-    --systemd-boot "$SYSTEMD_BOOT_DIR/systemd-bootaa64.efi" \
-    --stub "$SYSTEMD_BOOT_DIR/linuxaa64.efi.stub" \
-    --linux "$KERNEL_IMAGE" \
-    --devicetree "$DTB_PATH" \
-    --cmdline "${KERNEL_CMDLINE:-}" \
-    --output "$IMAGES_OUTPUT"
+# Decide flow: DTB path vs FIT path
+if [[ -n "$DTB_FILENAME" ]]; then
+    # Locate DTB in kernel build artifacts
+    DTB_PATH=$(find "$KERNEL_BUILD_ARTIFACTS" -name "$DTB_FILENAME" -print -quit)
+    if [[ -z "$DTB_PATH" ]];  then
+        echo "Error: DTB file '$DTB_FILENAME' not found in $KERNEL_BUILD_ARTIFACTS."
+        exit 1
+    fi
 
-# Generate dtb.bin
-echo "Creating dtb.bin..."
-generate_boot_bins.sh dtb \
-    --input "$DTB_PATH" \
-    --output "$IMAGES_OUTPUT"
+    echo "Creating efi_with_dtb.bin..."
+    generate_boot_bins.sh efi \
+        --ramdisk "$CONCATENATE_RAMDISK" \
+        --systemd-boot "$SYSTEMD_BOOT_DIR/systemd-bootaa64.efi" \
+        --stub "$SYSTEMD_BOOT_DIR/linuxaa64.efi.stub" \
+        --linux "$KERNEL_IMAGE" \
+        --devicetree "$DTB_PATH" \
+        --cmdline "${KERNEL_CMDLINE:-}" \
+        --output "$IMAGES_OUTPUT"
 
-# Package kernel image into boot binary
-echo "Creating boot.img..."
-mkbootimg --header_version 2 \
-    --kernel "$KERNEL_IMAGE" \
-    --dtb "$DTB_PATH" \
-    --cmdline "${KERNEL_CMDLINE:-}" \
-    --ramdisk "$CONCATENATE_RAMDISK" \
-    --base 0x80000000 \
-    --pagesize 2048 \
-    --output "$IMAGES_OUTPUT/boot.img"
+    # Generate dtb.bin
+    echo "Creating dtb.bin..."
+    generate_boot_bins.sh dtb \
+        --input "$DTB_PATH" \
+        --output "$IMAGES_OUTPUT"
+
+    # Package kernel image into boot binary
+    echo "Creating boot.img..."
+    mkbootimg --header_version 2 \
+        --kernel "$KERNEL_IMAGE" \
+        --dtb "$DTB_PATH" \
+        --cmdline "${KERNEL_CMDLINE:-}" \
+        --ramdisk "$CONCATENATE_RAMDISK" \
+        --base 0x80000000 \
+        --pagesize 2048 \
+        --output "$IMAGES_OUTPUT/boot.img"
+else
+    echo "No --dtb provided, invoking FIT flow..."
+    make_fitimage.sh --kobj "$KERNEL_BUILD_ARTIFACTS" \
+        --metadata "$FIT_METADATA_DTS" \
+        --its "$FIT_IMAGE_ITS" \
+        --output "$IMAGES_OUTPUT"
+fi
 
 echo "Build completed successfully. Images are in $IMAGES_OUTPUT."

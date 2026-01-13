@@ -112,7 +112,10 @@ dpkg-deb -xv ../artifacts/systemd-boot-efi.deb ../artifacts/systemd
 
 if [ -n "$RAMDISK_PATH" ]; then
     echo "Downloading ramdisk..."
-    wget -O ../artifacts/ramdisk.gz "$RAMDISK_PATH"
+#    wget -O ../artifacts/ramdisk.gz "$RAMDISK_PATH"
 fi
+
+echo "Downloading qcom-dtb-metadata..."
+git clone https://github.com/qualcomm-linux/qcom-dtb-metadata.git ../artifacts/qcom-dtb-metadata
 
 echo "Environment setup complete. Please restart your terminal or run 'source ~/.bashrc' to activate aliases."
