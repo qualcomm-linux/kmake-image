@@ -25,7 +25,7 @@ RUN printf "Types: deb\nURIs: http://archive.ubuntu.com/ubuntu/\nSuites: noble n
     apt-get install -y gcc-aarch64-linux-gnu && \
     apt-get install -y python3-pip swig yamllint && \
     apt install -y python3-setuptools python3-wheel && \
-    python3 -m pip install --break-system-packages dtschema==2025.08 jinja2 ply GitPython && \
+    python3 -m pip install --break-system-packages dtschema==2025.08 jinja2 ply GitPython kas && \
     python3 -m pip install --break-system-packages b4==0.14.3 && \
     apt-get install -y yq && \
     apt-get install -y abigail-tools sparse && \
