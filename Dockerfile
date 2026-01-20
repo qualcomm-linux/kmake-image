@@ -20,6 +20,7 @@ RUN printf "Types: deb\nURIs: http://archive.ubuntu.com/ubuntu/\nSuites: noble n
     printf "Types: deb\nURIs: http://ports.ubuntu.com/ubuntu-ports/\nSuites: noble noble-updates noble-security\nComponents: main restricted universe multiverse\nArchitectures: arm64\n\n" > /etc/apt/sources.list.d/ports-arm64.sources && \
     apt-get update && \
     apt-get install -y build-essential git clang-15 lld-15 flex bison bc libssl-dev curl kmod systemd-ukify && \
+    apt-get install -y chrpath diffstat gawk wget zstd && \
     apt-get install -y debhelper-compat libdw-dev:amd64 libelf-dev:amd64 && \
     apt-get install -y rsync mtools dosfstools lavacli u-boot-tools cpio && \
     apt-get install -y gcc-aarch64-linux-gnu && \
@@ -30,6 +31,9 @@ RUN printf "Types: deb\nURIs: http://archive.ubuntu.com/ubuntu/\nSuites: noble n
     apt-get install -y yq && \
     apt-get install -y abigail-tools sparse && \
     apt-get install -y cmake libyaml-dev && \
+    apt-get install -y locales && \
+    locale-gen en_US.UTF-8 && \
+    update-locale LANG=en_US.UTF-8 && \
     curl "https://android.googlesource.com/platform/system/tools/mkbootimg/+/refs/heads/android12-release/mkbootimg.py?format=TEXT" | base64 --decode > /usr/bin/mkbootimg && \
     chmod +x /usr/bin/mkbootimg && \
     chmod 755 /usr/bin/generate_boot_bins.sh && \
@@ -38,3 +42,6 @@ RUN printf "Types: deb\nURIs: http://archive.ubuntu.com/ubuntu/\nSuites: noble n
     dpkg --add-architecture arm64 && \
     apt-get install -y libssl-dev:arm64 && \
     rm -rf /var/lib/apt/lists/*
+
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
