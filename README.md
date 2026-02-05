@@ -205,8 +205,8 @@ fastboot boot images/boot.img
 ```
 cd ..
 kmake-image-run make_fitimage.sh \
-        --metadata artifacts/qcom-dtb-metadata/qcom-metadata.dtb \
-		--its artifacts/qcom-dtb-metadata/qcom-fitimage.its \
+        --metadata artifacts/qcom-dtb-metadata/qcom-metadata.dts \
+        --its artifacts/qcom-dtb-metadata/qcom-fitimage.its \
         --kobj kobj \
         --output images
 ```
