@@ -205,3 +205,7 @@ else
 fi
 
 echo "Build completed successfully. Images are in $IMAGES_OUTPUT."
+
+cp "$KERNEL_BUILD_ARTIFACTS/vmlinux" "$IMAGES_OUTPUT/vmlinux"
+echo "Copied vmlinux corresponding into $IMAGES_OUTPUT folder."
+
