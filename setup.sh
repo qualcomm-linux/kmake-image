@@ -77,6 +77,7 @@ fi
 echo "Adding current user to docker group..."
 sudo groupadd docker || true
 sudo usermod -aG docker $USER
+newgrp docker
 
 echo "Building Docker image..."
 docker build --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) --build-arg USER_NAME=$(whoami) -t kmake-image .

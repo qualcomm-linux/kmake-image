@@ -21,6 +21,7 @@ https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository
 
 ### Add user to the docker group
 ```
+sudo groupadd docker
 sudo usermod -aG docker $USER
 newgrp docker
 ```
