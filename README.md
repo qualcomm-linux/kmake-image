@@ -21,8 +21,8 @@ https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository
 
 ### Add user to the docker group
 ```
-sudo usermod -aG docker $USER
-newgrp docker
+getent group docker > /dev/null || sudo groupadd docker
+id -nG "$USER" | grep -qw docker || sudo usermod -aG docker "$USER"
 ```
 
 Restart your terminal, or log out and log in again, to ensure your user is
@@ -32,8 +32,10 @@ added to the **docker** group (the output of `id` should contain *docker*).
 
 ## Workspace Setup Script
 *setup.sh* script simplify the initial setup for kernel developers:
-- Builds the Docker image and fetches Qualcomm Kernel source tree and required
-artifacts (ramdisk, systemd-boot).
+- By default, pulls and tags hosted kmake Docker image:
+  `artifacts.codelinaro.org/clo-420-qli-registry/kmake-image:ver.1.0`
+- Fetches Qualcomm Kernel source tree and required artifacts (ramdisk,
+  systemd-boot).
 - Export necessary environment variables for kernel development.
 ```
 ./setup.sh
@@ -69,11 +71,12 @@ Qualcomm Linux Kernel for QCS6490 Rb3Gen2.
 git clone git@github.com:qualcomm-linux/kmake-image.git
 cd kmake-image
 ```
-Build docker
+Pull hosted docker image
 ```
-docker build -t kmake-image .
+docker pull artifacts.codelinaro.org/clo-420-qli-registry/kmake-image:ver.1.0
+docker tag artifacts.codelinaro.org/clo-420-qli-registry/kmake-image:ver.1.0 kmake-image
 ```
-or
+For development only, local docker image build command:
 ```
 docker build --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) --build-arg USER_NAME=$(whoami) -t kmake-image .
 ```
