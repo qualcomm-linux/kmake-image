@@ -12,3 +12,7 @@ dpkg -i /linux-image-6.17.0-rc7-dbg_6.17.0~rc7-7_arm64.deb
 reboot
 ```
 After reboot, your kernel will be booted on device.
+
+## License
+
+This project is licensed under the terms described in the [LICENSE](./LICENSE) file.
