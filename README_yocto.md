@@ -41,3 +41,7 @@ kmake-image-run build.sh --dtb sa8775p-ride.dtb \
  fastboot flash dtb_a dtb.bin
  fastboot reboot
 ```
+
+## License
+
+This project is licensed under the terms described in the [LICENSE](./LICENSE) file.
