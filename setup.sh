@@ -14,10 +14,10 @@
 #
 # Description:
 #   This script sets up a development environment for building the Qualcomm
-#   Linux kernel using Docker. It installs Docker if not present, builds a
-#   Docker image, sets up useful aliases for kernel compilation, clones the
-#   kernel repository, and downloads systemd boot binaries and optionally a
-#   ramdisk image.
+#   Linux kernel using Docker. It installs Docker if not present, pulls a
+#   hosted Docker image by default, sets up useful aliases for kernel
+#   compilation, clones the kernel repository, and downloads systemd boot
+#   binaries and optionally a ramdisk image.
 #
 # Notes:
 #   - Run this script from your workspace directory.
@@ -37,8 +37,9 @@ show_help() {
     echo ""
     echo "Description:"
     echo "  Sets up a Qualcomm Linux kernel development environment using Docker."
-    echo "  Installs Docker if missing, builds a Docker image, configures aliases,"
-    echo "  clones the kernel repo, and downloads systemd boot binaries and ramdisk."
+    echo "  Installs Docker if missing, pulls a hosted Docker image by default,"
+    echo "  configures aliases, clones the kernel repo, and downloads systemd boot"
+    echo "  binaries and ramdisk."
 }
 
 # Default values
@@ -46,6 +47,7 @@ KERNEL_REPO=https://github.com/qualcomm-linux/kernel.git
 KERNEL_BRANCH=qcom-next
 KERNEL_PATH="../kernel"
 RAMDISK_PATH="https://snapshots.linaro.org/member-builds/qcomlt/testimages/arm64/1379/initramfs-test-image-qemuarm64-20230321073831-1379.rootfs.cpio.gz"
+HOSTED_KMAKE_IMAGE="artifacts.codelinaro.org/clo-420-qli-registry/kmake-image:ver.1.0"
 
 # Parse long options
 eval set -- "$(getopt -n "$0" -o "" \
@@ -75,11 +77,23 @@ if ! command -v docker &> /dev/null; then
 fi
 
 echo "Adding current user to docker group..."
-sudo groupadd docker || true
-sudo usermod -aG docker $USER
 
-echo "Building Docker image..."
-docker build --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) --build-arg USER_NAME=$(whoami) -t kmake-image .
+if getent group docker > /dev/null; then
+    echo "Group 'docker' already exists. Skipping group creation."
+else
+    sudo groupadd docker
+fi
+
+if id -nG "$USER" | grep -qw docker; then
+    echo "User '$USER' is already in docker group."
+else
+    sudo usermod -aG docker "$USER"
+    echo "Added '$USER' to docker group. Re-login may be required for group changes to take effect."
+fi
+
+echo "Pulling hosted kmake Docker image: $HOSTED_KMAKE_IMAGE"
+docker pull "$HOSTED_KMAKE_IMAGE"
+docker tag "$HOSTED_KMAKE_IMAGE" kmake-image
 
 echo "Setting up Docker aliases..."
 {
