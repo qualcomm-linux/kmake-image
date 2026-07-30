@@ -8,6 +8,7 @@
 #
 # Commands:
 #   efi       Generate EFI image (Unified Kernel Image with optional DTB)
+#   efiesp    Generate EFIESP image containing Kernel Image, Ramfs, and DTB
 #   dtb       Generate DTB image (FAT-formatted image containing DTB)
 #   fatimg    Generate FAT image from a directory
 #   help      Show help message
@@ -16,6 +17,7 @@
 #   This script creates bootable binary images required for Qualcomm Linux
 #   development. It supports:
 #     - EFI images using systemd-boot and ukify (with optional DTB integration)
+#     - EFIESP images with Kernel Image, Ramfs, and DTB bundled
 #     - DTB images packaged in a FAT filesystem
 #     - Generic FAT images for boot partitions
 #
@@ -28,6 +30,13 @@
 #   --cmdline CMDLINE      Optional kernel command line parameters
 #   --output DIR           Output directory for generated EFI image
 #
+# Options for efiesp:
+#   --ramdisk PATH         Path to the ramdisk file
+#   --linux PATH           Path to the Linux Image
+#   --devicetree PATH      Path to the DTB file
+#   --cmdline CMDLINE      Kernel command line parameters
+#   --systemd-boot PATH    Path to the systemd boot binary (bootaa64.efi)
+
 # Options for dtb:
 #   --input PATH           Path to the DTB file
 #   --output DIR           Output directory for generated DTB image
@@ -52,6 +61,7 @@ show_help() {
     echo ""
     echo "Commands:"
     echo "  efi       Generate EFI image"
+    echo "  efiesp    Generate EFIESP image"
     echo "  dtb       Generate DTB image"
     echo "  fatimg    Generate FAT image"
     echo "  help      Show this help message"
@@ -64,6 +74,13 @@ show_help() {
     echo "  --devicetree PATH      Optional Path to the DTB file"
     echo "  --cmdline CMDLINE      Optional Kernel command line parameters"
     echo "  --output DIR           Optional Output directory"
+    echo ""
+    echo "efiesp command options:"
+    echo "  --ramdisk PATH         Path to the ramdisk file"
+    echo "  --linux PATH           Path to the Linux Image"
+    echo "  --devicetree PATH      Path to the DTB file"
+    echo "  --cmdline CMDLINE      Kernel command line parameters"
+    echo "  --systemd-boot PATH    Path to the systemd boot binary"
     echo ""
     echo "dtb command options:"
     echo "  --input PATH           Path to the DTB file"
@@ -187,6 +204,64 @@ generate_efi_image() {
     generate_bin "${OUTPUT_DIR}/efi_dir" "${OUTPUT_DIR}/${EFI_BIN_FILENAME}"
 }
 
+generate_efiesp_image() {
+    # Parse arguments
+    while [[ "$#" -gt 0 ]]; do
+        case $1 in
+            --ramdisk) RAMDISK="$2"; shift ;;
+            --linux) LINUX_IMAGE="$2"; shift ;;
+            --devicetree) DTB="$2"; shift ;;
+	    --cmdline) CMDLINE="$2"; shift ;;
+            --systemd-boot) SYSTEMD_BOOT="$2"; shift ;;
+            *) echo "Unknown parameter passed: $1"; show_help ; exit 1 ;;
+        esac
+        shift
+    done
+
+    # Check if required parameters are provided
+    if [[ -z "${RAMDISK}" || -z "${LINUX_IMAGE}" || -z "${DTB}" || -z "${CMDLINE}" || -z "${SYSTEMD_BOOT}" ]]; then
+        echo "efiesp: missing required parameter!"
+        echo "Use --help option for usage information."
+        exit 1
+    fi
+
+    # Check if ramdisk and Linux Image exist
+    if [[ ! -e "${RAMDISK}" || ! -e "${LINUX_IMAGE}" || ! -e "${DTB}" || ! -e "${SYSTEMD_BOOT}" ]]; then
+        echo "all of ${RAMDISK}, ${LINUX_IMAGE}, ${DTB}, and ${SYSTEMD_BOOT} has to present!"
+        exit 1
+    fi
+
+    # create EFI template
+    TMPDIR=$(mktemp -d)
+    mkdir -p "${TMPDIR}"/EFI/BOOT/ "${TMPDIR}"/EFI/qclinux/ "${TMPDIR}"/dtb "${TMPDIR}"/loader/entries/
+
+    cp "${SYSTEMD_BOOT}" "${TMPDIR}"/EFI/BOOT/bootaa64.efi
+    cp "${RAMDISK}" "${TMPDIR}"/EFI/qclinux/qclinux_ramfs.cpio.gz
+    cp "${LINUX_IMAGE}" "${TMPDIR}"/EFI/qclinux/Image
+    cp "${DTB}" "${TMPDIR}"/dtb/default-dtcfg.dtb
+
+    echo "default qclinux.conf" > "${TMPDIR}"/loader/loader.conf
+    cat > "${TMPDIR}"/loader/entries/qclinux.conf <<EOF
+title   QC Linux(aarch64, UEFI)
+options	   ${CMDLINE}
+linux      /EFI/qclinux/Image
+initrd     /EFI/qclinux/qclinux_ramfs.cpio.gz
+devicetree /dtb/default-dtcfg.dtb
+EOF
+
+    # create efiesp image
+    # on WP meta, the size of efiesp.bin is expected to be 260MiB, and anything exceeding
+    # that is truncated in flashing by eg. qdl. This can be a potential cause for corruptions.
+    # Thus, the size has to be hardcoded to be 260MiB instead of identifying it dynamically.
+    dd if=/dev/zero of=efiesp.bin bs=1M count=260
+    mkfs.vfat -F 32 efiesp.bin
+    MTOOLS_SKIP_CHECK=1 mcopy -s -i efiesp.bin /"${TMPDIR}"/* ::
+
+    echo "efiesp generation complete."
+
+    rm -rf "${TMPDIR}"
+}
+
 generate_dtb_image() {
     # Parse arguments
     while [[ "$#" -gt 0 ]]; do
@@ -247,6 +322,9 @@ generate_fat_image() {
 if [[ "$1" == "efi" ]]; then
     shift
     generate_efi_image "$@"
+elif [[ "$1" == "efiesp" ]]; then
+    shift
+    generate_efiesp_image "$@"
 elif [[ "$1" == "dtb" ]]; then
     shift
     generate_dtb_image "$@"
