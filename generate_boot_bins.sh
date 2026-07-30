@@ -8,6 +8,7 @@
 #
 # Commands:
 #   efi       Generate EFI image (Unified Kernel Image with optional DTB)
+#   eifesp    Modify a base efiesp with Kernel Image, Ramfs, and DTB
 #   dtb       Generate DTB image (FAT-formatted image containing DTB)
 #   fatimg    Generate FAT image from a directory
 #   help      Show help message
@@ -16,6 +17,7 @@
 #   This script creates bootable binary images required for Qualcomm Linux
 #   development. It supports:
 #     - EFI images using systemd-boot and ukify (with optional DTB integration)
+#     - Modification of existing efiesp images
 #     - DTB images packaged in a FAT filesystem
 #     - Generic FAT images for boot partitions
 #
@@ -28,6 +30,12 @@
 #   --cmdline CMDLINE      Optional kernel command line parameters
 #   --output DIR           Output directory for generated EFI image
 #
+# Options for efiesp:
+#   --ramdisk PATH         Path to the ramdisk file
+#   --linux PATH           Path to the Linux Image
+#   --devicetree PATH      Path to the DTB file
+#   --efi PATH             Path to the efiesp file
+
 # Options for dtb:
 #   --input PATH           Path to the DTB file
 #   --output DIR           Output directory for generated DTB image
@@ -52,6 +60,7 @@ show_help() {
     echo ""
     echo "Commands:"
     echo "  efi       Generate EFI image"
+    echo "  efiesp    Modify EFIESP image"
     echo "  dtb       Generate DTB image"
     echo "  fatimg    Generate FAT image"
     echo "  help      Show this help message"
@@ -64,6 +73,12 @@ show_help() {
     echo "  --devicetree PATH      Optional Path to the DTB file"
     echo "  --cmdline CMDLINE      Optional Kernel command line parameters"
     echo "  --output DIR           Optional Output directory"
+    echo ""
+    echo "efiesp command options:"
+    echo "  --ramdisk PATH         Path to the ramdisk file"
+    echo "  --linux PATH           Path to the Linux Image"
+    echo "  --devicetree PATH      Path to the DTB file"
+    echo "  --efi PATH             Path to the efiesp file"
     echo ""
     echo "dtb command options:"
     echo "  --input PATH           Path to the DTB file"
@@ -187,6 +202,52 @@ generate_efi_image() {
     generate_bin "${OUTPUT_DIR}/efi_dir" "${OUTPUT_DIR}/${EFI_BIN_FILENAME}"
 }
 
+# the expectation currently is that the base efiesp should have a cmdline present in
+# loader/entries/qclinux.conf which points to dtb/default-dtcfg.dtb. The conf should
+# also use EFI/qclinux/Image and EFI/qclinux/qclinux_ramfs.cpio.gz as kernel and ramfs.
+# efiesp is used in WP meta which can also boot windows, so make sure the base efiesp
+# is capable of booting directly to linux.
+generate_efiesp_image() {
+    # Parse arguments
+    while [[ "$#" -gt 0 ]]; do
+        case $1 in
+            --ramdisk) RAMDISK="$2"; shift ;;
+            --linux) LINUX_IMAGE="$2"; shift ;;
+            --devicetree) DTB="$2"; shift ;;
+	    --efi) ESP="$2"; shift ;;
+            *) echo "Unknown parameter passed: $1"; show_help ; exit 1 ;;
+        esac
+        shift
+    done
+
+    # Check if required parameters are provided
+    if [[ -z "${RAMDISK}" || -z "${LINUX_IMAGE}" || -z "${DTB}" || -z "${ESP}" ]]; then
+        echo "efiesp: missing required parameter!"
+        echo "Use --help option for usage information."
+        exit 1
+    fi
+
+    # Check if ramdisk and Linux Image exist
+    if [[ ! -e "${RAMDISK}" || ! -e "${LINUX_IMAGE}" || ! -e "${DTB}" || ! -e "${ESP}" ]]; then
+        echo "all of ${RAMDISK}, ${LINUX_IMAGE}, ${DTB}, and ${ESP} has to present!"
+        exit 1
+    fi
+
+    TMPDIR=$(mktemp -d)
+
+    # modify efiesp
+    mount "${ESP}" "${TMPDIR}"
+
+    mkdir -p "${TMPDIR}"/dtb/ "${TMPDIR}"/EFI/qclinux/
+
+    cp "${RAMDISK}" "${TMPDIR}"/EFI/qclinux/qclinux_ramfs.cpio.gz
+    cp "${LINUX_IMAGE}" "${TMPDIR}"/EFI/qclinux/Image
+    cp "${DTB}" "${TMPDIR}"/dtb/default-dtcfg.dtb
+
+    umount "${TMPDIR}"
+    rmdir "${TMPDIR}"
+}
+
 generate_dtb_image() {
     # Parse arguments
     while [[ "$#" -gt 0 ]]; do
@@ -247,6 +308,9 @@ generate_fat_image() {
 if [[ "$1" == "efi" ]]; then
     shift
     generate_efi_image "$@"
+elif [[ "$1" == "efiesp" ]]; then
+    shift
+    generate_efiesp_image "$@"
 elif [[ "$1" == "dtb" ]]; then
     shift
     generate_dtb_image "$@"
