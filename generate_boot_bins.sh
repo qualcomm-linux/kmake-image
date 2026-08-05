@@ -36,6 +36,7 @@
 #   --devicetree PATH      Path to the DTB file
 #   --cmdline CMDLINE      Kernel command line parameters
 #   --systemd-boot PATH    Path to the systemd boot binary (bootaa64.efi)
+#   --output DIR           Output directory for the efiesp image"
 
 # Options for dtb:
 #   --input PATH           Path to the DTB file
@@ -81,6 +82,7 @@ show_help() {
     echo "  --devicetree PATH      Path to the DTB file"
     echo "  --cmdline CMDLINE      Kernel command line parameters"
     echo "  --systemd-boot PATH    Path to the systemd boot binary"
+    echo "  --output DIR           Output directory for the efiesp image"
     echo ""
     echo "dtb command options:"
     echo "  --input PATH           Path to the DTB file"
@@ -213,13 +215,14 @@ generate_efiesp_image() {
             --devicetree) DTB="$2"; shift ;;
 	    --cmdline) CMDLINE="$2"; shift ;;
             --systemd-boot) SYSTEMD_BOOT="$2"; shift ;;
+	    --output) OUTPUT_DIR="$2"; shift ;;
             *) echo "Unknown parameter passed: $1"; show_help ; exit 1 ;;
         esac
         shift
     done
 
     # Check if required parameters are provided
-    if [[ -z "${RAMDISK}" || -z "${LINUX_IMAGE}" || -z "${DTB}" || -z "${CMDLINE}" || -z "${SYSTEMD_BOOT}" ]]; then
+    if [[ -z "${RAMDISK}" || -z "${LINUX_IMAGE}" || -z "${DTB}" || -z "${CMDLINE}" || -z "${SYSTEMD_BOOT}" || -z "${OUTPUT_DIR}" ]]; then
         echo "efiesp: missing required parameter!"
         echo "Use --help option for usage information."
         exit 1
@@ -256,6 +259,9 @@ EOF
     dd if=/dev/zero of=efiesp.bin bs=1M count=260
     mkfs.vfat -F 32 efiesp.bin
     MTOOLS_SKIP_CHECK=1 mcopy -s -i efiesp.bin /"${TMPDIR}"/* ::
+
+    mkdir -p "${OUTPUT_DIR}"
+    mv efiesp.bin "${OUTPUT_DIR}"
 
     echo "efiesp generation complete."
 
