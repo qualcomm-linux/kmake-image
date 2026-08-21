@@ -19,15 +19,15 @@ COPY make_fitimage.sh /usr/bin
 RUN printf "Types: deb\nURIs: http://archive.ubuntu.com/ubuntu/\nSuites: noble noble-updates noble-security\nComponents: main restricted universe multiverse\nArchitectures: amd64\n\n" > /etc/apt/sources.list.d/base-amd64.sources && \
     printf "Types: deb\nURIs: http://ports.ubuntu.com/ubuntu-ports/\nSuites: noble noble-updates noble-security\nComponents: main restricted universe multiverse\nArchitectures: arm64\n\n" > /etc/apt/sources.list.d/ports-arm64.sources && \
     apt-get update && \
-    apt-get install -y build-essential git clang-15 lld-15 flex bison bc libssl-dev curl kmod systemd-ukify && \
+    apt-get install -y build-essential git clang lld flex bison bc libssl-dev curl kmod systemd-ukify && \
     apt-get install -y chrpath diffstat gawk wget zstd && \
     apt-get install -y debhelper-compat libdw-dev:amd64 libelf-dev:amd64 && \
     apt-get install -y rsync mtools dosfstools lavacli u-boot-tools cpio && \
     apt-get install -y gcc-aarch64-linux-gnu && \
     apt-get install -y python3-pip swig yamllint && \
     apt install -y python3-setuptools python3-wheel && \
-    python3 -m pip install --break-system-packages dtschema==2026.4 jinja2 ply GitPython kas && \
-    python3 -m pip install --break-system-packages b4==0.14.3 && \
+    python3 -m pip install --break-system-packages dtschema jinja2 ply GitPython kas && \
+    python3 -m pip install --break-system-packages b4 && \
     apt-get install -y yq && \
     apt-get install -y abigail-tools sparse && \
     apt-get install -y cmake libyaml-dev && \
