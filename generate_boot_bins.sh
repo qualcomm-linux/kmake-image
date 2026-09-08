@@ -253,10 +253,11 @@ devicetree /dtb/default-dtcfg.dtb
 EOF
 
     # create efiesp image
-    # on WP meta, the size of efiesp.bin is expected to be 260MiB, and anything exceeding
-    # that is truncated in flashing by eg. qdl. This can be a potential cause for corruptions.
-    # Thus, the size has to be hardcoded to be 260MiB instead of identifying it dynamically.
-    dd if=/dev/zero of=efiesp.bin bs=1M count=260
+    # on WP meta, the size of efiesp.bin is expected to be 260MiB on Hamoa/Purwa, and anything
+    # exceeding that is truncated in flashing by eg. qdl. This can be a potential cause for
+    # corruptions. On latest Glymur/Mahua metas this is 512 MiB. Generally the CI artifacts
+    # will go beyond 260MiB, so this won't currently account for the former two.
+    dd if=/dev/zero of=efiesp.bin bs=1M count=512
     mkfs.vfat -F 32 efiesp.bin
     MTOOLS_SKIP_CHECK=1 mcopy -s -i efiesp.bin /"${TMPDIR}"/* ::
 
