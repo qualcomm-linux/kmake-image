@@ -1,0 +1,102 @@
+name: Build and Push Kmake Image (Manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Docker image tag (e.g., latest, v1.0.0, commit-sha)'
+        required: true
+        default: latest
+
+env:
+  AWS_REGION: us-west-2
+  TECH_TEAM_NAMESPACE: kernel
+  IMAGE_NAME: kmake-image
+  ENVIRONMENT_VALUE: ${{ vars.ENVIRONMENT_VALUE }}
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+
+concurrency:
+  group: kmake-image-manual
+  cancel-in-progress: true
+
+jobs:
+  build-and-push:
+  
+    runs-on:
+      group: ${{ vars.RUNNER_GROUP }}
+      labels:
+        - self-hosted
+        - ${{ vars.RUNNER_LABEL }}
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set dynamic Docker image tags
+        run: |
+          echo "IMAGE_TAG=${{ inputs.image_tag }}" >> $GITHUB_ENV
+          echo "IMAGE_REF=${TECH_TEAM_NAMESPACE}/${IMAGE_NAME}:${{ inputs.image_tag }}" >> $GITHUB_ENV
+          echo "IMAGE_REF_SHA=${TECH_TEAM_NAMESPACE}/${IMAGE_NAME}:${GITHUB_SHA}" >> $GITHUB_ENV
+          echo "REGISTRY=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com" >> $GITHUB_ENV
+
+      - name: Authenticate with AWS ECR
+        run: |
+          aws ecr get-login-password --region "$AWS_REGION" \
+            | docker login --username AWS --password-stdin "$REGISTRY"
+
+      - name: Ensure ECR repository exists
+        run: |
+          set -e
+          REPO="${TECH_TEAM_NAMESPACE}/${IMAGE_NAME}"
+
+          if ! aws ecr describe-repositories \
+            --repository-names "$REPO" \
+            --region "$AWS_REGION" \
+            --registry-id "$AWS_ACCOUNT_ID" >/dev/null 2>&1; then
+
+            echo "Repository $REPO not found, creating..."
+            aws ecr create-repository \
+              --region "$AWS_REGION" \
+              --registry-id "$AWS_ACCOUNT_ID" \
+              --repository-name "$REPO" \
+              --tags Key=environment,Value="$ENVIRONMENT_VALUE" >/dev/null || {
+
+                if aws ecr describe-repositories \
+                  --repository-names "$REPO" \
+                  --region "$AWS_REGION" \
+                  --registry-id "$AWS_ACCOUNT_ID" >/dev/null 2>&1; then
+                  echo "Repository $REPO now exists (created concurrently)."
+                else
+                  echo "Failed to create repository $REPO" >&2
+                  exit 1
+                fi
+              }
+          else
+            echo "Repository $REPO already exists, skipping creation."
+          fi
+
+      - name: Build Docker image
+        run: |
+          set -e
+          docker build \
+            -f Dockerfile \
+            -t "$REGISTRY/$IMAGE_REF" \
+            -t "$REGISTRY/$IMAGE_REF_SHA" \
+            .
+
+      - name: Push Docker image to ECR
+        run: |
+          set -e
+          docker push "$REGISTRY/$IMAGE_REF"
+          docker push "$REGISTRY/$IMAGE_REF_SHA"
+
+      - name: Cleanup Docker
+        if: always()
+        run: |
+          docker logout || true
+          docker image prune -f || true
