@@ -22,12 +22,19 @@ COPY generate_boot_bins.sh /usr/bin
 COPY build.sh /usr/bin
 COPY make_fitimage.sh /usr/bin
 
-RUN printf "Types: deb\nURIs: http://archive.ubuntu.com/ubuntu/\nSuites: noble noble-updates noble-security\nComponents: main restricted universe multiverse\nArchitectures: amd64\n\n" > /etc/apt/sources.list.d/base-amd64.sources && \
-    printf "Types: deb\nURIs: http://ports.ubuntu.com/ubuntu-ports/\nSuites: noble noble-updates noble-security\nComponents: main restricted universe multiverse\nArchitectures: arm64\n\n" > /etc/apt/sources.list.d/ports-arm64.sources && \
+# Supports both amd64 (cross-compiling) and arm64 (native) hosts. On amd64
+# the arm64 ports archive is added for the arm64 libssl-dev used by the
+# kernel's sign-file/extract-cert tooling; on arm64 the default sources
+# already point at ports.ubuntu.com and the packages are native.
+RUN HOST_ARCH="$(dpkg --print-architecture)" && \
+    if [ "$HOST_ARCH" = "amd64" ]; then \
+        printf "Types: deb\nURIs: http://archive.ubuntu.com/ubuntu/\nSuites: noble noble-updates noble-security\nComponents: main restricted universe multiverse\nArchitectures: amd64\n\n" > /etc/apt/sources.list.d/base-amd64.sources && \
+        printf "Types: deb\nURIs: http://ports.ubuntu.com/ubuntu-ports/\nSuites: noble noble-updates noble-security\nComponents: main restricted universe multiverse\nArchitectures: arm64\n\n" > /etc/apt/sources.list.d/ports-arm64.sources ; \
+    fi && \
     apt-get update && \
     apt-get install -y build-essential git clang-15 lld-15 flex bison bc libssl-dev curl kmod systemd-ukify && \
     apt-get install -y chrpath diffstat gawk wget zstd && \
-    apt-get install -y debhelper-compat libdw-dev:amd64 libelf-dev:amd64 && \
+    apt-get install -y debhelper-compat libdw-dev:$HOST_ARCH libelf-dev:$HOST_ARCH && \
     apt-get install -y rsync mtools dosfstools lavacli u-boot-tools cpio && \
     apt-get install -y gcc-aarch64-linux-gnu && \
     apt-get install -y python3-pip swig yamllint && \
@@ -45,8 +52,10 @@ RUN printf "Types: deb\nURIs: http://archive.ubuntu.com/ubuntu/\nSuites: noble n
     chmod 755 /usr/bin/generate_boot_bins.sh && \
     chmod 755 /usr/bin/build.sh && \
     chmod 755 /usr/bin/make_fitimage.sh && \
-    dpkg --add-architecture arm64 && \
-    apt-get install -y libssl-dev:arm64 && \
+    if [ "$HOST_ARCH" != "arm64" ]; then \
+        dpkg --add-architecture arm64 && \
+        apt-get install -y libssl-dev:arm64 ; \
+    fi && \
     rm -rf /var/lib/apt/lists/*
 
 ENV LANG=en_US.UTF-8
