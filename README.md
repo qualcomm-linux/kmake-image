@@ -80,6 +80,8 @@ For development only, local docker image build command:
 ```
 docker build --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) --build-arg USER_NAME=$(whoami) -t kmake-image .
 ```
+The image can be built on both x86_64 (amd64) and aarch64 (arm64) hosts; the
+host architecture is detected at build time.
 
 ### 2. Setup the aliases in your .bashrc
 ```

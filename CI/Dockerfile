@@ -5,6 +5,12 @@ ARG GROUP_ID
 ARG USER_NAME
 
 RUN if [ -n "$USER_ID" ] && [ -n "$GROUP_ID" ] && [ -n "$USER_NAME" ]; then \
+        if getent passwd "$USER_ID" > /dev/null; then \
+            userdel -r "$(getent passwd "$USER_ID" | cut -d: -f1)" ; \
+        fi && \
+        if getent group "$GROUP_ID" > /dev/null; then \
+            groupdel "$(getent group "$GROUP_ID" | cut -d: -f1)" ; \
+        fi && \
         groupadd -g "$GROUP_ID" "$USER_NAME" && \
         useradd -m -u "$USER_ID" -g "$GROUP_ID" -d / "$USER_NAME" ; \
     fi
